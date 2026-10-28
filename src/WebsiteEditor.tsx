@@ -2,60 +2,31 @@ import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { ArrowLeft, Check, ChevronDown, Code2, ExternalLink, Eye, Globe2, Monitor, Palette, Plus, Save, Smartphone, Trash2, Upload, X } from "lucide-react";
 
+export type StoreProduct = { name: string; price: string; description: string; category: string };
+export type TravelPackage = { name: string; destination: string; duration: string; price: string; description: string };
 export type EditableSite = {
-  id: number;
-  business: string;
-  category: string;
-  location: string;
-  title: string;
-  tagline: string;
-  description: string;
-  phone: string;
-  email: string;
-  address: string;
-  primaryColor: string;
-  backgroundColor: string;
-  template: string;
-  services: string[];
-  pages: string[];
-  updatedAt: string;
+ id:number; business:string; category:string; location:string; title:string; tagline:string; description:string; phone:string; email:string; address:string;
+ primaryColor:string; backgroundColor:string; template:string; services:string[]; pages:string[]; products:StoreProduct[]; travelPackages:TravelPackage[]; whatsapp:string; currency:string; updatedAt:string;
 };
-const STORAGE_KEY = "webbon-sites-v1";
-const templates = [
-  { id: "studio", name: "Studio", note: "Minimal · Editorial", color: "#d7f0bd" },
-  { id: "classic", name: "Classic", note: "Trustworthy · Timeless", color: "#dce8f5" },
-  { id: "bold", name: "Bold", note: "Confident · Modern", color: "#f6d9c7" },
-];
-const safe = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] || c));
-
-export function readSavedSites(): EditableSite[] {
-  try { const value = localStorage.getItem(STORAGE_KEY); return value ? JSON.parse(value) as EditableSite[] : []; }
-  catch { return []; }
-}
-export function saveSite(site: EditableSite) {
-  const current = readSavedSites();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([site, ...current.filter((item) => item.id !== site.id)]));
-}
-export function removeSite(id: number) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(readSavedSites().filter((site) => site.id !== id)));
-}
-export function makeSite(project: { id: number; business: string; category: string; location: string }): EditableSite {
-  const business = project.business;
-  return {
-    ...project,
-    title: business,
-    tagline: "A better experience starts here.",
-    description: "We believe great service starts with listening. Discover how our team can help you with thoughtful, dependable service tailored to your needs.",
-    phone: "",
-    email: "",
-    address: project.location === "Location not added" ? "" : project.location,
-    primaryColor: "#345b3c",
-    backgroundColor: "#f7f6f0",
-    template: "studio",
-    services: ["Personalized service", "Expert guidance", "A team you can trust"],
-    pages: ["Home", "About", "Services", "Contact"],
-    updatedAt: new Date().toISOString(),
-  };
+const STORAGE_KEY="webbon-sites-v1";
+const categories=["Retail & ecommerce","Fashion & apparel","Beauty & personal care","Electronics","Home & living","Food & grocery","Restaurant & café","Travel agency & tours","Hotel & accommodation","Healthcare","Dental clinic","Fitness & wellness","Real estate","Home services","Professional services","Education","Portfolio & creative","Other"];
+const templates=[{id:"studio",name:"Studio",note:"Minimal · Editorial",color:"#d7f0bd"},{id:"classic",name:"Classic",note:"Trustworthy · Timeless",color:"#dce8f5"},{id:"bold",name:"Bold",note:"Confident · Modern",color:"#f6d9c7"}];
+const isShopCategory=(c:string)=>/retail|ecommerce|fashion|apparel|electronics|home & living|food & grocery|beauty/i.test(c);
+const isTravelCategory=(c:string)=>/travel|tour|hotel|accommodation/i.test(c);
+const categoryDefaults=(category:string)=>{
+ if(isTravelCategory(category)) return {tagline:"Go beyond the usual. Find your next story.",description:"Discover thoughtfully planned journeys, local experiences, and memorable escapes. Tell us what kind of trip you have in mind and our travel team will help you plan it.",primaryColor:"#176b67",backgroundColor:"#f3f8f5",template:"classic",services:["Curated holiday packages","Custom trip planning","Local experiences"],pages:["Home","Destinations","Packages","About","Contact"],travelPackages:[{name:"Coastal Escape",destination:"Cox's Bazar, Bangladesh",duration:"3 days · 2 nights",price:"৳12,500",description:"Beachside stay, local transfers, and a relaxed coastal itinerary."},{name:"Green Hills Retreat",destination:"Sylhet, Bangladesh",duration:"3 days · 2 nights",price:"৳15,900",description:"Tea gardens, waterfalls, scenic drives, and a comfortable stay."},{name:"Island Discovery",destination:"Saint Martin, Bangladesh",duration:"4 days · 3 nights",price:"৳21,500",description:"Island time, boat transfers, and a guided local experience."}]};
+ if(isShopCategory(category)) return {tagline:"Good things, thoughtfully chosen.",description:"Discover quality products made to fit your everyday life. Browse the collection, find your favourites, and get in touch for help with your order.",primaryColor:"#344d36",backgroundColor:"#faf8f2",template:"studio",services:["Quality you can trust","Carefully selected collection","Helpful customer support"],pages:["Home","Shop","Collections","About","Contact"],travelPackages:[] as TravelPackage[]};
+ return {tagline:"A better experience starts here.",description:"We believe great service starts with listening. Discover how our team can help you with thoughtful, dependable service tailored to your needs.",primaryColor:"#345b3c",backgroundColor:"#f7f6f0",template:"studio",services:["Personalized service","Expert guidance","A team you can trust"],pages:["Home","About","Services","Contact"],travelPackages:[] as TravelPackage[]};
+};
+const safe=(s:string)=>s.replace(/[&<>"']/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]||c));
+export function readSavedSites():EditableSite[]{try{const v=localStorage.getItem(STORAGE_KEY);if(!v)return[];return(JSON.parse(v) as Partial<EditableSite>[]).map(s=>({...s,products:s.products||[],travelPackages:s.travelPackages||[],whatsapp:s.whatsapp||"",currency:s.currency||"৳",services:s.services||[],pages:s.pages||["Home","About","Contact"]} as EditableSite));}catch{return[];}}
+export function saveSite(site:EditableSite){const current=readSavedSites();localStorage.setItem(STORAGE_KEY,JSON.stringify([site,...current.filter(i=>i.id!==site.id)]));}
+export function removeSite(id:number){localStorage.setItem(STORAGE_KEY,JSON.stringify(readSavedSites().filter(s=>s.id!==id)));}
+export function makeSite(project:{id:number;business:string;category:string;location:string}):EditableSite{
+ const d=categoryDefaults(project.category);
+ return {...project,title:project.business,tagline:d.tagline,description:d.description,phone:"",email:"",address:project.location==="Location not added"?"":project.location,primaryColor:d.primaryColor,backgroundColor:d.backgroundColor,template:d.template,services:d.services,pages:d.pages,
+ products:isShopCategory(project.category)?[{name:"Everyday Essential",price:"৳1,290",description:"A customer favourite, designed for everyday use.",category:"Featured"},{name:"Signature Collection",price:"৳1,850",description:"A considered pick with quality in every detail.",category:"New arrivals"},{name:"The Best Seller",price:"৳990",description:"A versatile essential worth coming back for.",category:"Best sellers"}]:[],
+ travelPackages:d.travelPackages||[],whatsapp:"",currency:"৳",updatedAt:new Date().toISOString()};
 }
 function buildHtml(site: EditableSite) {
   const services = site.services.filter(Boolean).map((item) => `<article class="service"><span>✳</span><h3>${safe(item)}</h3><p>Thoughtful solutions, shaped around what matters to you.</p></article>`).join("");
@@ -92,23 +63,28 @@ export default function WebsiteEditor({ project, onClose, onSaved }: Props) {
       {!preview && <aside className="editor-panel">
         <div className="editor-panel-heading"><div><span className="editor-kicker">WEBSITE SETUP</span><h2>Make it yours.</h2></div><Palette size={19}/></div>
         <label className="editor-field">Business / website name<input value={site.title} onChange={(e) => update("title", e.target.value)} placeholder="Business name"/></label>
+        <label className="editor-field">Business category<select value={site.category} onChange={(e) => {const next=e.target.value;const d=categoryDefaults(next);setSite(c=>({...c,category:next,tagline:d.tagline,description:d.description,primaryColor:d.primaryColor,backgroundColor:d.backgroundColor,template:d.template,services:d.services,pages:d.pages,products:isShopCategory(next)?(c.products.length?c.products:makeSite({id:c.id,business:c.title,category:next,location:c.location}).products):[],travelPackages:isTravelCategory(next)?(c.travelPackages.length?c.travelPackages:d.travelPackages):[],updatedAt:new Date().toISOString()}));}}>{categories.map(c=><option key={c}>{c}</option>)}</select></label>
+        <div className="editor-category-note"><strong>{isTravelCategory(site.category)?"Travel agency toolkit":isShopCategory(site.category)?"Online shop toolkit":"Business website toolkit"}</strong><span>{isTravelCategory(site.category)?"Trip packages, destination details and booking enquiry preview.":isShopCategory(site.category)?"Product catalogue, prices, add-to-enquiry cards and order contact.":"Service sections, contact details and responsive business pages."}</span></div>
         <label className="editor-field">Headline<input value={site.tagline} onChange={(e) => update("tagline", e.target.value)} placeholder="A short, clear promise"/></label>
         <label className="editor-field">Introductory copy<textarea rows={4} value={site.description} onChange={(e) => update("description", e.target.value)}/></label>
-        <div className="editor-field-row"><label className="editor-field">Phone<input value={site.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+1 555 0100"/></label><label className="editor-field">Email<input type="email" value={site.email} onChange={(e) => update("email", e.target.value)} placeholder="hello@example.com"/></label></div>
+        <div className="editor-field-row"><label className="editor-field">Phone<input value={site.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+880 1XXX-XXXXXX"/></label><label className="editor-field">Email<input type="email" value={site.email} onChange={(e) => update("email", e.target.value)} placeholder="hello@example.com"/></label></div>
         <label className="editor-field">Address / location<input value={site.address} onChange={(e) => update("address", e.target.value)} placeholder="Business address"/></label>
-        <div className="editor-field"><span className="editor-field-label">Starting design</span><div className="editor-templates">{templates.map((t) => <button type="button" key={t.id} className={"editor-template " + (site.template === t.id ? "selected" : "")} onClick={() => { update("template", t.id); update("primaryColor", t.id === "classic" ? "#345b83" : t.id === "bold" ? "#9b492c" : "#345b3c"); update("backgroundColor", t.id === "classic" ? "#f4f7fa" : t.id === "bold" ? "#fff6ef" : "#f7f6f0"); }}><span style={{background:t.color}}/><strong>{t.name}</strong><small>{t.note}</small></button>)}</div></div>
-        <div className="editor-field"><span className="editor-field-label">Brand colours</span><div className="editor-colors"><label><input type="color" value={site.primaryColor} onChange={(e) => update("primaryColor", e.target.value)}/><span>Accent</span><code>{site.primaryColor}</code></label><label><input type="color" value={site.backgroundColor} onChange={(e) => update("backgroundColor", e.target.value)}/><span>Background</span><code>{site.backgroundColor}</code></label></div></div>
-        <div className="editor-field"><span className="editor-field-label">Navigation pages</span><div className="editor-page-list">{site.pages.map((page, index) => <div key={index}><span className="editor-page-grip">⠿</span><input aria-label={"Page " + (index+1)} value={page} onChange={(e) => update("pages", site.pages.map((p,i) => i === index ? e.target.value : p))}/><button title="Remove page" onClick={() => update("pages", site.pages.filter((_,i) => i !== index))}><Trash2 size={14}/></button></div>)}</div><button className="editor-add-page" onClick={() => update("pages", [...site.pages, "New page"])}><Plus size={14}/> Add page to navigation</button></div>
-        <div className="editor-field"><span className="editor-field-label">Services / key offerings</span>{site.services.map((service,index) => <div className="editor-service-row" key={index}><input value={service} onChange={(e) => update("services", site.services.map((s,i) => i === index ? e.target.value : s))}/><button title="Remove service" onClick={() => update("services", site.services.filter((_,i) => i !== index))}><Trash2 size={14}/></button></div>)}<div className="editor-add-service"><input value={serviceDraft} onChange={(e) => setServiceDraft(e.target.value)} placeholder="Add a service"/><button onClick={addService} disabled={!serviceDraft.trim()}><Plus size={15}/></button></div></div>
+        <label className="editor-field">WhatsApp number (optional)<input value={site.whatsapp} onChange={(e) => update("whatsapp", e.target.value)} placeholder="8801XXXXXXXXX"/><small className="editor-hint">Include country code. A WhatsApp contact link is included in the exported website.</small></label>
+        <div className="editor-field"><span className="editor-field-label">Starting design</span><div className="editor-templates">{templates.map(t=><button type="button" key={t.id} className={"editor-template "+(site.template===t.id?"selected":"")} onClick={()=>{update("template",t.id);update("primaryColor",t.id==="classic"?(isTravelCategory(site.category)?"#176b67":"#345b83"):t.id==="bold"?"#9b492c":(isShopCategory(site.category)?"#344d36":"#345b3c"));update("backgroundColor",t.id==="classic"?"#f4f7fa":t.id==="bold"?"#fff6ef":"#f7f6f0");}}><span style={{background:t.color}}/><strong>{t.name}</strong><small>{t.note}</small></button>)}</div></div>
+        <div className="editor-field"><span className="editor-field-label">Brand colours</span><div className="editor-colors"><label><input type="color" value={site.primaryColor} onChange={e=>update("primaryColor",e.target.value)}/><span>Accent</span><code>{site.primaryColor}</code></label><label><input type="color" value={site.backgroundColor} onChange={e=>update("backgroundColor",e.target.value)}/><span>Background</span><code>{site.backgroundColor}</code></label></div></div>
+        {isShopCategory(site.category)&&<div className="editor-field"><span className="editor-field-label">Product catalogue</span>{site.products.map((p,i)=><div className="editor-data-card" key={i}><label>Product name<input value={p.name} onChange={e=>update("products",site.products.map((x,j)=>i===j?{...x,name:e.target.value}:x))}/></label><div className="editor-field-row"><label>Price<input value={p.price} onChange={e=>update("products",site.products.map((x,j)=>i===j?{...x,price:e.target.value}:x))}/></label><label>Collection<input value={p.category} onChange={e=>update("products",site.products.map((x,j)=>i===j?{...x,category:e.target.value}:x))}/></label></div><label>Description<textarea rows={2} value={p.description} onChange={e=>update("products",site.products.map((x,j)=>i===j?{...x,description:e.target.value}:x))}/></label><button className="editor-remove-data" onClick={()=>update("products",site.products.filter((_,j)=>j!==i))}><Trash2 size={13}/> Remove product</button></div>)}<button className="editor-add-page" onClick={()=>update("products",[...site.products,{name:"New product",price:"৳0",description:"Product details go here.",category:"New arrivals"}])}><Plus size={14}/> Add product</button></div>}
+        {isTravelCategory(site.category)&&<div className="editor-field"><span className="editor-field-label">Travel packages & destinations</span>{site.travelPackages.map((p,i)=><div className="editor-data-card" key={i}><label>Package name<input value={p.name} onChange={e=>update("travelPackages",site.travelPackages.map((x,j)=>i===j?{...x,name:e.target.value}:x))}/></label><label>Destination<input value={p.destination} onChange={e=>update("travelPackages",site.travelPackages.map((x,j)=>i===j?{...x,destination:e.target.value}:x))}/></label><div className="editor-field-row"><label>Duration<input value={p.duration} onChange={e=>update("travelPackages",site.travelPackages.map((x,j)=>i===j?{...x,duration:e.target.value}:x))}/></label><label>Starting price<input value={p.price} onChange={e=>update("travelPackages",site.travelPackages.map((x,j)=>i===j?{...x,price:e.target.value}:x))}/></label></div><label>What's included<textarea rows={2} value={p.description} onChange={e=>update("travelPackages",site.travelPackages.map((x,j)=>i===j?{...x,description:e.target.value}:x))}/></label><button className="editor-remove-data" onClick={()=>update("travelPackages",site.travelPackages.filter((_,j)=>j!==i))}><Trash2 size={13}/> Remove package</button></div>)}<button className="editor-add-page" onClick={()=>update("travelPackages",[...site.travelPackages,{name:"New trip package",destination:"Destination",duration:"3 days · 2 nights",price:"Request a quote",description:"Describe the experience and what is included."}])}><Plus size={14}/> Add travel package</button></div>}
+        <div className="editor-field"><span className="editor-field-label">Navigation pages</span><div className="editor-page-list">{site.pages.map((page,index)=><div key={index}><span className="editor-page-grip">⠿</span><input aria-label={"Page "+(index+1)} value={page} onChange={e=>update("pages",site.pages.map((p,i)=>i===index?e.target.value:p))}/><button title="Remove page" onClick={()=>update("pages",site.pages.filter((_,i)=>i!==index))}><Trash2 size={14}/></button></div>)}</div><button className="editor-add-page" onClick={()=>update("pages",[...site.pages,"New page"])}><Plus size={14}/> Add page to navigation</button></div>
+        <div className="editor-field"><span className="editor-field-label">Services / key offerings</span>{site.services.map((service,index)=><div className="editor-service-row" key={index}><input value={service} onChange={e=>update("services",site.services.map((s,i)=>i===index?e.target.value:s))}/><button title="Remove service" onClick={()=>update("services",site.services.filter((_,i)=>i!==index))}><Trash2 size={14}/></button></div>)}<div className="editor-add-service"><input value={serviceDraft} onChange={e=>setServiceDraft(e.target.value)} placeholder="Add a service"/><button onClick={addService} disabled={!serviceDraft.trim()}><Plus size={15}/></button></div></div>
         <div className="editor-panel-footer"><button className="editor-save full" onClick={save}><Save size={15}/>{saved ? "Changes saved on this device" : "Save website"}</button><small>Local draft storage · Export HTML to deploy elsewhere</small></div>
       </aside>}
       <main className={"editor-canvas " + (preview ? "preview-mode" : "")}>
         <div className="canvas-toolbar"><div className="canvas-breadcrumb"><Globe2 size={15}/><span>{site.title.toLowerCase().replace(/\s+/g,"-") || "untitled"}.preview</span><span className="preview-badge">DRAFT</span></div><div className="canvas-controls"><button className={device === "desktop" ? "active" : ""} onClick={() => setDevice("desktop")} aria-label="Desktop preview"><Monitor size={16}/></button><button className={device === "mobile" ? "active" : ""} onClick={() => setDevice("mobile")} aria-label="Mobile preview"><Smartphone size={16}/></button></div></div>
         <div className="preview-stage"><div className={"site-preview-frame " + (device === "mobile" ? "mobile-preview" : "")}><div className="site-preview-content" style={{background:site.backgroundColor, "--site-brand":site.primaryColor} as CSSProperties}>
           <header className="mock-site-header"><strong>{site.title || "Your Business"}</strong><nav>{site.pages.filter(Boolean).map((page,i)=><span key={i}>{page}</span>)}</nav></header>
-          <section className="mock-site-hero"><small>{site.category} {site.location && "· " + site.location}</small><h1>{site.tagline || "Your headline goes here."}</h1><p>{site.description}</p><span className="mock-site-cta">Let's talk ↗</span></section>
-          <section className="mock-site-services"><small>WHAT WE DO</small><h2>Good work. Thoughtfully done.</h2><div>{site.services.filter(Boolean).map((service,i)=><article key={i}><b>✳</b><h3>{service}</h3><p>Thoughtful solutions, shaped around what matters to you.</p></article>)}</div></section>
-          <section className="mock-site-contact"><small>GET IN TOUCH</small><h2>Let's make something good.</h2><p>{site.phone}{site.phone && site.email ? " · " : ""}{site.email}</p>{site.address && <p>{site.address}</p>}</section>
+          <section className="mock-site-hero"><small>{site.category} {site.location && "· "+site.location}</small><h1>{site.tagline || "Your headline goes here."}</h1><p>{site.description}</p><span className="mock-site-cta">{isTravelCategory(site.category)?"Explore packages ↗":isShopCategory(site.category)?"Shop collection ↗":"Let's talk ↗"}</span></section>
+          {isShopCategory(site.category)?<section className="mock-commerce-section"><small>THE COLLECTION</small><h2>Find your new favourite.</h2><div className="mock-product-grid">{site.products.map((p,i)=><article key={i}><div className="mock-product-image">{p.category||"Featured"}</div><h3>{p.name}</h3><p>{p.description}</p><strong>{p.price}</strong><span className="mock-product-action">Add to bag ↗</span></article>)}</div><p className="mock-commerce-note">Order enquiries are supported; connect a commerce backend before accepting online payments.</p></section>:isTravelCategory(site.category)?<section className="mock-commerce-section"><small>TRAVEL PACKAGES</small><h2>Find your kind of escape.</h2><div className="mock-product-grid">{site.travelPackages.map((p,i)=><article key={i}><div className="mock-product-image mock-trip-image">{p.duration}</div><h3>{p.name}</h3><p>{p.destination} · {p.description}</p><strong>{p.price}</strong><span className="mock-product-action">Enquire about trip ↗</span></article>)}</div><p className="mock-commerce-note">Booking requests are enquiries only. Confirm availability and payment manually.</p></section>:<section className="mock-site-services"><small>WHAT WE DO</small><h2>Good work. Thoughtfully done.</h2><div>{site.services.filter(Boolean).map((service,i)=><article key={i}><b>✳</b><h3>{service}</h3><p>Thoughtful solutions, shaped around what matters to you.</p></article>)}</div></section>}
+          <section className="mock-site-contact"><small>GET IN TOUCH</small><h2>{isTravelCategory(site.category)?"Let's plan your next trip.":isShopCategory(site.category)?"Questions about an order?":"Let's make something good."}</h2><p>{site.phone}{site.phone&&site.email?" · ":""}{site.email}</p>{site.whatsapp&&<p>WhatsApp: {site.whatsapp}</p>}{site.address&&<p>{site.address}</p>}</section>
           <footer>© {new Date().getFullYear()} {site.title}. All rights reserved.</footer>
         </div></div></div>
         <div className="canvas-bottom"><span><Check size={14}/> Responsive preview</span><span>Preview content is editable by your team</span></div>
