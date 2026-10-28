@@ -8,6 +8,10 @@ Webbon is a fast and easy website operations workspace for creating professional
 - Website project list with search and status filters
 - Create-project form for business name, category, location, staff assignment, and notes
 - Project status updates and a starter production-readiness checklist
+- Manual website editor with editable business copy, contact details, service cards, navigation labels, and brand colours
+- Responsive draft preview with desktop/mobile viewport toggles
+- Browser-local draft persistence and single-file HTML export
+- Cloudflare Workers Static Assets configuration, health endpoint, and deployment guide
 - Responsive desktop, tablet, and mobile layout
 - React + TypeScript + Vite foundation
 
