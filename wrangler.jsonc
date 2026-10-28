@@ -11,7 +11,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "webbon-db",
+      "database_name": "webbon-production-db",
+      "database_id": "b3577746-a028-4dfa-9eab-5bbba697288b",
       "migrations_dir": "migrations"
     }
   ],
