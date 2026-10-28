@@ -56,8 +56,6 @@ export default function WebsiteEditor({ project, onClose, onSaved }: Props) {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
   const [serviceDraft, setServiceDraft] = useState("");
   const html = useMemo(() => buildHtml(site), [site]);
   useEffect(() => {
