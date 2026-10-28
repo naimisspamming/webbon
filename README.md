@@ -10,7 +10,7 @@ Webbon is a staff-operated website workspace for building and managing client we
 - Single-file HTML export for manual publishing
 - Cloudflare Worker API for project creation, project status updates, and website draft persistence
 - Cloudflare D1 schema for businesses, websites, versions, activity, users, sessions, products, orders, order items, travel bookings, and contact submissions
-- Cloudflare Access JWT verification on data APIs
+- single-owner email/password authentication with signed, HttpOnly session cookies on data APIs
 
 ## Requirements
 
@@ -55,23 +55,21 @@ npm run build
 
 4. Confirm the `DB` binding points to `webbon-db` in `wrangler.jsonc`. Commit and push the updated config so Cloudflare deploys the same binding.
 
-## Protect the workspace with Cloudflare Access
+## Configure the single-owner login
 
-The dashboard and data API are an internal staff workspace. Do not expose it publicly without access control.
+The dashboard is private to one account. Published customer websites can remain public; do not put Cloudflare Access in front of the entire Worker if public routes are needed.
 
-1. In Cloudflare Zero Trust, open **Access → Applications** and create a **Self-hosted** application for the Webbon Worker. Prefer the Worker-level **Protect this Worker behind Access** option so the Worker, custom domain, `workers.dev` hostname, and preview URLs are protected.
-2. Create an **Allow** policy limited to the email addresses of authorized staff. Do not use an “Everyone” policy.
-3. In the Access application settings, copy the **Application Audience (AUD) Tag**.
-4. In the Cloudflare dashboard, open **Workers & Pages → webbon → Settings → Variables and Secrets** and add:
-   - `ACCESS_TEAM_DOMAIN`: your team hostname, for example `your-team.cloudflareaccess.com` (do not include a path)
-   - `ACCESS_AUD`: the Access application AUD tag
-5. Redeploy the Worker after adding the variables.
+In **Workers & Pages → webbon → Settings → Variables and Secrets**, add these as **secrets** (not plain text variables):
 
-The Worker validates the signed `Cf-Access-Jwt-Assertion` token and its issuer, expiry, and audience before allowing database operations. Access itself controls which staff emails may enter the workspace.
+- `ADMIN_EMAIL`: the owner login email
+- `ADMIN_PASSWORD`: a strong, unique owner password
+- `AUTH_SECRET`: a randomly generated secret of at least 32 bytes
+
+Do not commit these values to GitHub or share them in chat. Redeploy the Worker after saving the secrets. The API uses a signed, HttpOnly, Secure, SameSite cookie with a seven-day expiry and checks authentication before database operations.
 
 ## Verify production
 
-Open `https://webbon.app/api/health` after deployment. The response should report `databaseConfigured: true` and `accessConfigured: true`. Then open the workspace, sign in through Cloudflare Access, create a test project, refresh the page, and confirm the project is still present. Delete the test project manually from the dashboard only if you have added a delete workflow; otherwise remove it from the D1 database after confirming persistence.
+Open `https://webbon.app/api/health` after deployment. Confirm `databaseConfigured: true`. Then open the workspace, sign in with the configured owner email and password, create a test project, refresh the page, and confirm the project is still present. Delete the test project manually from the dashboard only if you have added a delete workflow; otherwise remove it from the D1 database after confirming persistence.
 
 ## API routes currently implemented
 
