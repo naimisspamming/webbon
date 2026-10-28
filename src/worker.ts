@@ -18,6 +18,9 @@ interface Env {
   DB?: D1Database;
   ACCESS_TEAM_DOMAIN?: string;
   ACCESS_AUD?: string;
+  ADMIN_EMAIL?: string;
+  ADMIN_PASSWORD?: string;
+  AUTH_SECRET?: string;
 }
 
 const noStore = { "Cache-Control": "no-store" };
@@ -76,6 +79,43 @@ async function verifyAccessJwt(request: Request, env: Env): Promise<boolean> {
   }
 }
 
+
+function encodeBase64Url(value: Uint8Array): string {
+  let binary = "";
+  for (const byte of value) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/=/g, "").replace(/\\+/g, "-").replace(/\\//g, "_");
+}
+async function signSession(payload: string, secret: string): Promise<string> {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return encodeBase64Url(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload))));
+}
+async function sessionEmail(request: Request, env: Env): Promise<string | null> {
+  if (!env.AUTH_SECRET) return null;
+  const cookie = request.headers.get("Cookie") ?? "";
+  const token = cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("webbon_session="))?.slice("webbon_session=".length);
+  if (!token) return null;
+  const [payload, signature, extra] = token.split(".");
+  if (!payload || !signature || extra) return null;
+  try {
+    const expected = await signSession(payload, env.AUTH_SECRET);
+    if (signature !== expected) return null;
+    const claims = JSON.parse(new TextDecoder().decode(decodeBase64Url(payload))) as { email?: unknown; exp?: unknown };
+    if (typeof claims.email !== "string" || typeof claims.exp !== "number" || claims.exp <= Math.floor(Date.now() / 1000)) return null;
+    if (!env.ADMIN_EMAIL || claims.email.toLowerCase() !== env.ADMIN_EMAIL.toLowerCase()) return null;
+    return claims.email;
+  } catch { return null; }
+}
+async function constantTimeEqual(a: string, b: string): Promise<boolean> {
+  const [left, right] = await Promise.all([
+    crypto.subtle.digest("SHA-256", new TextEncoder().encode(a)),
+    crypto.subtle.digest("SHA-256", new TextEncoder().encode(b)),
+  ]);
+  const x = new Uint8Array(left), y = new Uint8Array(right);
+  let difference = 0;
+  for (let i = 0; i < x.length; i++) difference |= x[i] ^ y[i];
+  return difference === 0;
+}
+
 function projectFromRow(row: Record<string, unknown>, index = 0) {
   const name = String(row.business ?? "");
   const statusKey = String(row.status ?? "in_progress");
@@ -110,10 +150,30 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return json({ ok: true, service: "webbon", databaseConfigured: Boolean(env.DB), accessConfigured: Boolean(env.ACCESS_TEAM_DOMAIN && env.ACCESS_AUD), timestamp: new Date().toISOString() });
   }
   if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
-  if (!env.DB) return json({ error: "Database is not configured. Bind the Webbon D1 database as DB." }, 503);
   const origin = request.headers.get("Origin");
   if (origin && origin !== url.origin) return json({ error: "Cross-origin request denied." }, 403);
-  if (!(await verifyAccessJwt(request, env))) return json({ error: "Access denied. Sign in through the protected Webbon Cloudflare Access application." }, env.ACCESS_TEAM_DOMAIN && env.ACCESS_AUD ? 401 : 503);
+
+  if (url.pathname === "/api/auth/login" && request.method === "POST") {
+    if (!env.ADMIN_EMAIL || !env.ADMIN_PASSWORD || !env.AUTH_SECRET) return json({ error: "Login is not configured. Add ADMIN_EMAIL, ADMIN_PASSWORD, and AUTH_SECRET as Worker secrets." }, 503);
+    const body = await readJson(request);
+    const email = cleanString(body?.email, 254).toLowerCase();
+    const password = typeof body?.password === "string" ? body.password : "";
+    if (!(await constantTimeEqual(email, env.ADMIN_EMAIL.toLowerCase())) || !(await constantTimeEqual(password, env.ADMIN_PASSWORD))) {
+      return json({ error: "Email or password is incorrect." }, 401);
+    }
+    const payload = encodeBase64Url(new TextEncoder().encode(JSON.stringify({ email: env.ADMIN_EMAIL.toLowerCase(), exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 })));
+    const token = payload + "." + await signSession(payload, env.AUTH_SECRET);
+    return new Response(JSON.stringify({ ok: true, email: env.ADMIN_EMAIL }), { status: 200, headers: { ...noStore, "Content-Type": "application/json", "Set-Cookie": "webbon_session=" + token + "; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800" } });
+  }
+  if (url.pathname === "/api/auth/logout" && request.method === "POST") {
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...noStore, "Content-Type": "application/json", "Set-Cookie": "webbon_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0" } });
+  }
+  if (url.pathname === "/api/auth/me" && request.method === "GET") {
+    const email = await sessionEmail(request, env);
+    return email ? json({ authenticated: true, email }) : json({ authenticated: false }, 401);
+  }
+  if (!(await sessionEmail(request, env))) return json({ error: "Please sign in to Webbon." }, 401);
+  if (!env.DB) return json({ error: "Database is not configured. Bind the Webbon D1 database as DB." }, 503);
 
   if (url.pathname === "/api/projects" && request.method === "GET") {
     const result = await env.DB.prepare(`SELECT b.id, b.name AS business, b.category, b.location, b.notes, w.status, w.assigned_to, w.updated_at
