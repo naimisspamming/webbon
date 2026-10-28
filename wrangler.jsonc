@@ -8,7 +8,14 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
-  "d1_databases": [\n    {\n      "binding": "DB",\n      "database_name": "webbon-db",\n      "migrations_dir": "migrations"\n    }\n  ],\n  "observability": {
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "webbon-db",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "observability": {
     "enabled": true
   }
 }
