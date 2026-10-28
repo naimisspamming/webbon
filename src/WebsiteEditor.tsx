@@ -81,7 +81,7 @@ export default function WebsiteEditor({ project, onClose, onSaved }: Props) {
     const a = document.createElement("a"); a.href = url; a.download = `${site.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "website"}.html`; a.click(); URL.revokeObjectURL(url);
   };
   const addService = () => { if (serviceDraft.trim()) { update("services", [...site.services, serviceDraft.trim()]); setServiceDraft(""); } };
-  return <div className="editor-overlay">
+  return <div className={"editor-overlay " + (preview ? "editor-is-preview" : "editor-is-edit")}>
     <header className="editor-topbar">
       <button className="editor-back" onClick={onClose}><ArrowLeft size={17}/><span>Back to workspace</span></button>
       <div className="editor-doc-title"><span className="editor-live-dot"/><div><strong>{site.title || "Untitled website"}</strong><small>Manual editor · Unsaved changes are local</small></div></div>
