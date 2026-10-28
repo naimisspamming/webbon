@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { FormEvent } from "react";
 
 export default function Login({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState("");
@@ -6,7 +7,7 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError("");
@@ -45,7 +46,7 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
             <input required type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Enter your password" style={{boxSizing:"border-box",width:"100%",padding:"13px 14px",border:"1px solid #deded7",borderRadius:10,fontSize:15,outlineColor:"#a1ff3a"}} />
           </label>
           {error && <p role="alert" style={{margin:0,padding:12,borderRadius:9,background:"#fff0ed",color:"#a32f1e",fontSize:13}}>{error}</p>}
-          <button disabled={busy} type="submit" style={{marginTop:4,padding:"14px 16px",border:0,borderRadius:10,background:"#22251f",color:"#fff",fontWeight:700,fontSize:15,cursor:busy?"wait":"pointer",opacity:busy?.7:1}}>{busy?"Signing in…":"Sign in"}</button>
+          <button disabled={busy} type="submit" style={{marginTop:4,padding:"14px 16px",border:0,borderRadius:10,background:"#22251f",color:"#fff",fontWeight:700,fontSize:15,cursor:busy?"wait":"pointer",opacity:busy ? 0.7 : 1}}>{busy?"Signing in…":"Sign in"}</button>
         </form>
         <p style={{margin:"22px 0 0",fontSize:12,color:"#888",lineHeight:1.6}}>Private access for the Webbon account owner.</p>
       </section>
