@@ -56,11 +56,40 @@ export default function WebsiteEditor({ project, onClose, onSaved }: Props) {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [serviceDraft, setServiceDraft] = useState("");
   const html = useMemo(() => buildHtml(site), [site]);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/sites/" + project.id, { credentials: "same-origin" }).then(async (response) => {
+      if (!response.ok) throw new Error("Could not load the saved website.");
+      return response.json() as Promise<{ site?: { content?: Partial<EditableSite> } }>;
+    }).then((data) => {
+      const content = data.site?.content;
+      if (active && content && typeof content.title === "string") {
+        setSite({ ...makeSite(project), ...content, id: project.id, products: content.products || [], travelPackages: content.travelPackages || [], services: content.services || [], pages: content.pages || ["Home", "About", "Contact"] } as EditableSite);
+      }
+    }).catch((error) => { if (active) setSaveError(error instanceof Error ? error.message : "Website load failed."); });
+    return () => { active = false; };
+  }, [project.id]);
   useEffect(() => { setSaved(false); }, [site]);
   const update = <K extends keyof EditableSite>(key: K, value: EditableSite[K]) => setSite((current) => ({ ...current, [key]: value, updatedAt: new Date().toISOString() }));
-  const save = () => { saveSite(site); setSaved(true); onSaved?.(site); };
+  const save = async () => {
+    setSaving(true);
+    setSaveError("");
+    try {
+      const response = await fetch("/api/sites/" + site.id, { method: "PUT", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ site }) });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Could not save website.");
+      setSaved(true);
+      onSaved?.(site);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Website save failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
   const download = () => {
     const blob = new Blob([html], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -70,7 +99,7 @@ export default function WebsiteEditor({ project, onClose, onSaved }: Props) {
   return <div className={"editor-overlay " + (preview ? "editor-is-preview" : "editor-is-edit")}>
     <header className="editor-topbar">
       <button className="editor-back" onClick={onClose}><ArrowLeft size={17}/><span>Back to workspace</span></button>
-      <div className="editor-doc-title"><span className="editor-live-dot"/><div><strong>{site.title || "Untitled website"}</strong><small>Manual editor · Unsaved changes are local</small></div></div>
+      <div className="editor-doc-title"><span className="editor-live-dot"/><div><strong>{site.title || "Untitled website"}</strong><small>Manual editor · Save changes to the database</small></div></div>
       <div className="editor-top-actions"><button className="editor-secondary" onClick={() => setPreview(!preview)}><Eye size={15}/>{preview ? "Edit website" : "Preview"}</button><button className="editor-save" onClick={save}><Save size={15}/>{saving ? "Saving…" : saved ? "Saved to database" : "Save changes"}</button><button className="editor-export" onClick={download}><Upload size={15}/><span>Export HTML</span></button></div>
     </header>
     <div className="editor-layout">
@@ -90,6 +119,7 @@ export default function WebsiteEditor({ project, onClose, onSaved }: Props) {
         {isTravelCategory(site.category)&&<div className="editor-field"><span className="editor-field-label">Travel packages & destinations</span>{site.travelPackages.map((p,i)=><div className="editor-data-card" key={i}><label>Package name<input value={p.name} onChange={e=>update("travelPackages",site.travelPackages.map((x,j)=>i===j?{...x,name:e.target.value}:x))}/></label><label>Destination<input value={p.destination} onChange={e=>update("travelPackages",site.travelPackages.map((x,j)=>i===j?{...x,destination:e.target.value}:x))}/></label><div className="editor-field-row"><label>Duration<input value={p.duration} onChange={e=>update("travelPackages",site.travelPackages.map((x,j)=>i===j?{...x,duration:e.target.value}:x))}/></label><label>Starting price<input value={p.price} onChange={e=>update("travelPackages",site.travelPackages.map((x,j)=>i===j?{...x,price:e.target.value}:x))}/></label></div><label>What's included<textarea rows={2} value={p.description} onChange={e=>update("travelPackages",site.travelPackages.map((x,j)=>i===j?{...x,description:e.target.value}:x))}/></label><button className="editor-remove-data" onClick={()=>update("travelPackages",site.travelPackages.filter((_,j)=>j!==i))}><Trash2 size={13}/> Remove package</button></div>)}<button className="editor-add-page" onClick={()=>update("travelPackages",[...site.travelPackages,{name:"New trip package",destination:"Destination",duration:"3 days · 2 nights",price:"Request a quote",description:"Describe the experience and what is included."}])}><Plus size={14}/> Add travel package</button></div>}
         <div className="editor-field"><span className="editor-field-label">Navigation pages</span><div className="editor-page-list">{site.pages.map((page,index)=><div key={index}><span className="editor-page-grip">⠿</span><input aria-label={"Page "+(index+1)} value={page} onChange={e=>update("pages",site.pages.map((p,i)=>i===index?e.target.value:p))}/><button title="Remove page" onClick={()=>update("pages",site.pages.filter((_,i)=>i!==index))}><Trash2 size={14}/></button></div>)}</div><button className="editor-add-page" onClick={()=>update("pages",[...site.pages,"New page"])}><Plus size={14}/> Add page to navigation</button></div>
         <div className="editor-field"><span className="editor-field-label">Services / key offerings</span>{site.services.map((service,index)=><div className="editor-service-row" key={index}><input value={service} onChange={e=>update("services",site.services.map((s,i)=>i===index?e.target.value:s))}/><button title="Remove service" onClick={()=>update("services",site.services.filter((_,i)=>i!==index))}><Trash2 size={14}/></button></div>)}<div className="editor-add-service"><input value={serviceDraft} onChange={e=>setServiceDraft(e.target.value)} placeholder="Add a service"/><button onClick={addService} disabled={!serviceDraft.trim()}><Plus size={15}/></button></div></div>
+        {saveError && <p role="alert" className="editor-error">{saveError}</p>}
         {saveError && <p role="alert" className="editor-error">{saveError}</p>}
         <div className="editor-panel-footer"><button className="editor-save full" onClick={save}><Save size={15}/>{saving ? "Saving to database…" : saved ? "Website saved to database" : "Save website"}</button><small>Website drafts are saved to the Webbon database.</small></div>
       </aside>}
