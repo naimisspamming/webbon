@@ -1,0 +1,117 @@
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Check, ChevronDown, Code2, ExternalLink, Eye, Globe2, Monitor, Palette, Plus, Save, Smartphone, Trash2, Upload, X } from "lucide-react";
+
+export type EditableSite = {
+  id: number;
+  business: string;
+  category: string;
+  location: string;
+  title: string;
+  tagline: string;
+  description: string;
+  phone: string;
+  email: string;
+  address: string;
+  primaryColor: string;
+  backgroundColor: string;
+  template: string;
+  services: string[];
+  pages: string[];
+  updatedAt: string;
+};
+const STORAGE_KEY = "webbon-sites-v1";
+const templates = [
+  { id: "studio", name: "Studio", note: "Minimal · Editorial", color: "#d7f0bd" },
+  { id: "classic", name: "Classic", note: "Trustworthy · Timeless", color: "#dce8f5" },
+  { id: "bold", name: "Bold", note: "Confident · Modern", color: "#f6d9c7" },
+];
+const safe = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] || c));
+
+export function readSavedSites(): EditableSite[] {
+  try { const value = localStorage.getItem(STORAGE_KEY); return value ? JSON.parse(value) as EditableSite[] : []; }
+  catch { return []; }
+}
+export function saveSite(site: EditableSite) {
+  const current = readSavedSites();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([site, ...current.filter((item) => item.id !== site.id)]));
+}
+export function removeSite(id: number) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(readSavedSites().filter((site) => site.id !== id)));
+}
+export function makeSite(project: { id: number; business: string; category: string; location: string }): EditableSite {
+  const business = project.business;
+  return {
+    ...project,
+    title: business,
+    tagline: "A better experience starts here.",
+    description: "We believe great service starts with listening. Discover how our team can help you with thoughtful, dependable service tailored to your needs.",
+    phone: "",
+    email: "",
+    address: project.location === "Location not added" ? "" : project.location,
+    primaryColor: "#345b3c",
+    backgroundColor: "#f7f6f0",
+    template: "studio",
+    services: ["Personalized service", "Expert guidance", "A team you can trust"],
+    pages: ["Home", "About", "Services", "Contact"],
+    updatedAt: new Date().toISOString(),
+  };
+}
+function buildHtml(site: EditableSite) {
+  const services = site.services.filter(Boolean).map((item) => `<article class="service"><span>✳</span><h3>${safe(item)}</h3><p>Thoughtful solutions, shaped around what matters to you.</p></article>`).join("");
+  const nav = site.pages.filter(Boolean).map((page) => `<a href="#${safe(page.toLowerCase().replace(/\s+/g, "-"))}">${safe(page)}</a>`).join("");
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="${safe(site.description.slice(0,155))}"><title>${safe(site.title)} | ${safe(site.tagline)}</title><style>
+:root{--brand:${site.primaryColor};--paper:${site.backgroundColor}*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;color:#252a24;background:var(--paper);line-height:1.6}a{color:inherit;text-decoration:none}.wrap{max-width:1120px;margin:auto;padding:0 28px}header{height:82px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #252a2415}.logo{font-size:20px;font-weight:800;letter-spacing:-.8px;color:var(--brand)}nav{display:flex;gap:25px;font-size:13px}nav a:hover{color:var(--brand)}.hero{padding:100px 0 92px;max-width:830px}.eyebrow{text-transform:uppercase;letter-spacing:2px;font-size:11px;color:var(--brand);font-weight:800}.hero h1{font-size:clamp(44px,7vw,82px);letter-spacing:-.065em;line-height:1.03;margin:18px 0 22px;max-width:850px}.hero p{font-size:17px;max-width:630px;color:#686d63}.cta{display:inline-flex;margin-top:20px;background:var(--brand);color:white;border-radius:5px;padding:14px 22px;font-size:13px;font-weight:700}.services{background:#fff;padding:75px 0}.section-label{font-size:11px;text-transform:uppercase;letter-spacing:1.6px;color:var(--brand);font-weight:800}.services h2,.about h2,.contact h2{font-size:clamp(30px,4vw,48px);letter-spacing:-.04em;line-height:1.1;margin:13px 0 30px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.service{border:1px solid #e9eae3;border-radius:9px;padding:25px}.service span{color:var(--brand);font-size:22px}.service h3{font-size:17px}.service p,.about p{font-size:14px;color:#72776d}.about{padding:80px 0;max-width:760px}.contact{padding:60px 0;border-top:1px solid #252a2415}.contact a{color:var(--brand);font-weight:700}.footer{padding:25px 0;border-top:1px solid #252a2415;font-size:12px;color:#777d73}@media(max-width:650px){.wrap{padding:0 20px}header{height:auto;min-height:75px;gap:12px;align-items:flex-start;padding-top:20px;padding-bottom:18px;flex-direction:column}nav{gap:15px;flex-wrap:wrap}.hero{padding:65px 0}.hero p{font-size:15px}.services{padding:55px 0}.grid{grid-template-columns:1fr}.about{padding:55px 0}}
+</style></head><body><header class="wrap"><a class="logo" href="#">${safe(site.title)}</a><nav>${nav}</nav></header><main><section class="wrap hero" id="home"><div class="eyebrow">${safe(site.category)} · ${safe(site.location)}</div><h1>${safe(site.tagline)}</h1><p>${safe(site.description)}</p><a class="cta" href="#contact">Let's talk <span aria-hidden="true"> ↗</span></a></section><section class="services" id="services"><div class="wrap"><div class="section-label">What we do</div><h2>Good work. Thoughtfully done.</h2><div class="grid">${services}</div></div></section><section class="wrap about" id="about"><div class="section-label">A little about us</div><h2>Built around people, not just promises.</h2><p>${safe(site.description)}</p></section><section class="wrap contact" id="contact"><div class="section-label">Get in touch</div><h2>Let's make something good.</h2>${site.phone ? `<p>Call us: <a href="tel:${safe(site.phone)}">${safe(site.phone)}</a></p>` : ""}${site.email ? `<p>Email: <a href="mailto:${safe(site.email)}">${safe(site.email)}</a></p>` : ""}${site.address ? `<p>${safe(site.address)}</p>` : ""}<p>Tell us what you have in mind and we'll take it from there.</p>${site.email ? `<a class="cta" href="mailto:${safe(site.email)}?subject=Website%20enquiry">Contact us ↗</a>` : ""}</section></main><footer class="wrap footer">© ${new Date().getFullYear()} ${safe(site.title)}. All rights reserved.</footer></body></html>`;
+}
+type Props = { project: { id: number; business: string; category: string; location: string }; onClose: () => void; onSaved?: (site: EditableSite) => void };
+export default function WebsiteEditor({ project, onClose, onSaved }: Props) {
+  const [site, setSite] = useState<EditableSite>(() => readSavedSites().find((item) => item.id === project.id) || makeSite(project));
+  const [preview, setPreview] = useState(false);
+  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [saved, setSaved] = useState(false);
+  const [serviceDraft, setServiceDraft] = useState("");
+  const html = useMemo(() => buildHtml(site), [site]);
+  useEffect(() => { setSaved(false); }, [site]);
+  const update = <K extends keyof EditableSite>(key: K, value: EditableSite[K]) => setSite((current) => ({ ...current, [key]: value, updatedAt: new Date().toISOString() }));
+  const save = () => { saveSite(site); setSaved(true); onSaved?.(site); };
+  const download = () => {
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `${site.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "website"}.html`; a.click(); URL.revokeObjectURL(url);
+  };
+  const addService = () => { if (serviceDraft.trim()) { update("services", [...site.services, serviceDraft.trim()]); setServiceDraft(""); } };
+  return <div className="editor-overlay">
+    <header className="editor-topbar">
+      <button className="editor-back" onClick={onClose}><ArrowLeft size={17}/><span>Back to workspace</span></button>
+      <div className="editor-doc-title"><span className="editor-live-dot"/><div><strong>{site.title || "Untitled website"}</strong><small>Manual editor · Unsaved changes are local</small></div></div>
+      <div className="editor-top-actions"><button className="editor-secondary" onClick={() => setPreview(!preview)}><Eye size={15}/>{preview ? "Edit website" : "Preview"}</button><button className="editor-save" onClick={save}><Save size={15}/>{saved ? "Saved" : "Save changes"}</button><button className="editor-export" onClick={download}><Upload size={15}/><span>Export HTML</span></button></div>
+    </header>
+    <div className="editor-layout">
+      {!preview && <aside className="editor-panel">
+        <div className="editor-panel-heading"><div><span className="editor-kicker">WEBSITE SETUP</span><h2>Make it yours.</h2></div><Palette size={19}/></div>
+        <label className="editor-field">Business / website name<input value={site.title} onChange={(e) => update("title", e.target.value)} placeholder="Business name"/></label>
+        <label className="editor-field">Headline<input value={site.tagline} onChange={(e) => update("tagline", e.target.value)} placeholder="A short, clear promise"/></label>
+        <label className="editor-field">Introductory copy<textarea rows={4} value={site.description} onChange={(e) => update("description", e.target.value)}/></label>
+        <div className="editor-field-row"><label className="editor-field">Phone<input value={site.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+1 555 0100"/></label><label className="editor-field">Email<input type="email" value={site.email} onChange={(e) => update("email", e.target.value)} placeholder="hello@example.com"/></label></div>
+        <label className="editor-field">Address / location<input value={site.address} onChange={(e) => update("address", e.target.value)} placeholder="Business address"/></label>
+        <div className="editor-field"><span className="editor-field-label">Starting design</span><div className="editor-templates">{templates.map((t) => <button type="button" key={t.id} className={"editor-template " + (site.template === t.id ? "selected" : "")} onClick={() => { update("template", t.id); update("primaryColor", t.id === "classic" ? "#345b83" : t.id === "bold" ? "#9b492c" : "#345b3c"); update("backgroundColor", t.id === "classic" ? "#f4f7fa" : t.id === "bold" ? "#fff6ef" : "#f7f6f0"); }}><span style={{background:t.color}}/><strong>{t.name}</strong><small>{t.note}</small></button>)}</div></div>
+        <div className="editor-field"><span className="editor-field-label">Brand colours</span><div className="editor-colors"><label><input type="color" value={site.primaryColor} onChange={(e) => update("primaryColor", e.target.value)}/><span>Accent</span><code>{site.primaryColor}</code></label><label><input type="color" value={site.backgroundColor} onChange={(e) => update("backgroundColor", e.target.value)}/><span>Background</span><code>{site.backgroundColor}</code></label></div></div>
+        <div className="editor-field"><span className="editor-field-label">Navigation pages</span><div className="editor-page-list">{site.pages.map((page, index) => <div key={index}><span className="editor-page-grip">⠿</span><input aria-label={"Page " + (index+1)} value={page} onChange={(e) => update("pages", site.pages.map((p,i) => i === index ? e.target.value : p))}/><button title="Remove page" onClick={() => update("pages", site.pages.filter((_,i) => i !== index))}><Trash2 size={14}/></button></div>)}</div><button className="editor-add-page" onClick={() => update("pages", [...site.pages, "New page"])}><Plus size={14}/> Add page to navigation</button></div>
+        <div className="editor-field"><span className="editor-field-label">Services / key offerings</span>{site.services.map((service,index) => <div className="editor-service-row" key={index}><input value={service} onChange={(e) => update("services", site.services.map((s,i) => i === index ? e.target.value : s))}/><button title="Remove service" onClick={() => update("services", site.services.filter((_,i) => i !== index))}><Trash2 size={14}/></button></div>)}<div className="editor-add-service"><input value={serviceDraft} onChange={(e) => setServiceDraft(e.target.value)} placeholder="Add a service"/><button onClick={addService} disabled={!serviceDraft.trim()}><Plus size={15}/></button></div></div>
+        <div className="editor-panel-footer"><button className="editor-save full" onClick={save}><Save size={15}/>{saved ? "Changes saved on this device" : "Save website"}</button><small>Local draft storage · Export HTML to deploy elsewhere</small></div>
+      </aside>}
+      <main className={"editor-canvas " + (preview ? "preview-mode" : "")}>
+        <div className="canvas-toolbar"><div className="canvas-breadcrumb"><Globe2 size={15}/><span>{site.title.toLowerCase().replace(/\s+/g,"-") || "untitled"}.preview</span><span className="preview-badge">DRAFT</span></div><div className="canvas-controls"><button className={device === "desktop" ? "active" : ""} onClick={() => setDevice("desktop")} aria-label="Desktop preview"><Monitor size={16}/></button><button className={device === "mobile" ? "active" : ""} onClick={() => setDevice("mobile")} aria-label="Mobile preview"><Smartphone size={16}/></button></div></div>
+        <div className="preview-stage"><div className={"site-preview-frame " + (device === "mobile" ? "mobile-preview" : "")}><div className="site-preview-content" style={{background:site.backgroundColor, "--site-brand":site.primaryColor} as React.CSSProperties}>
+          <header className="mock-site-header"><strong>{site.title || "Your Business"}</strong><nav>{site.pages.filter(Boolean).map((page,i)=><span key={i}>{page}</span>)}</nav></header>
+          <section className="mock-site-hero"><small>{site.category} {site.location && "· " + site.location}</small><h1>{site.tagline || "Your headline goes here."}</h1><p>{site.description}</p><span className="mock-site-cta">Let's talk ↗</span></section>
+          <section className="mock-site-services"><small>WHAT WE DO</small><h2>Good work. Thoughtfully done.</h2><div>{site.services.filter(Boolean).map((service,i)=><article key={i}><b>✳</b><h3>{service}</h3><p>Thoughtful solutions, shaped around what matters to you.</p></article>)}</div></section>
+          <section className="mock-site-contact"><small>GET IN TOUCH</small><h2>Let's make something good.</h2><p>{site.phone}{site.phone && site.email ? " · " : ""}{site.email}</p>{site.address && <p>{site.address}</p>}</section>
+          <footer>© {new Date().getFullYear()} {site.title}. All rights reserved.</footer>
+        </div></div></div>
+        <div className="canvas-bottom"><span><Check size={14}/> Responsive preview</span><span>Preview content is editable by your team</span></div>
+      </main>
+    </div>
+  </div>;
+}
