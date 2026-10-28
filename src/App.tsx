@@ -23,10 +23,10 @@ const statusClass: Record<ProjectStatus, string> = {
   "Published": "status-live", "Needs information": "status-needs"
 };
 const navItems = [
-  { label: "Overview", icon: LayoutDashboard },
-  { label: "Websites", icon: PanelsTopLeft },
-  { label: "Businesses", icon: Building2 },
-  { label: "Team", icon: Users },
+  { label: "Overview", icon: LayoutDashboard, count: undefined },
+  { label: "Websites", icon: PanelsTopLeft, count: undefined },
+  { label: "Businesses", icon: Building2, count: undefined },
+  { label: "Team", icon: Users, count: undefined },
 ];
 function App() {
   const [projects, setProjects] = useState<Project[]>(() => { try { const stored = localStorage.getItem(PROJECTS_STORAGE_KEY); const parsed = stored ? JSON.parse(stored) as Project[] : initialProjects; const cleaned = parsed.filter((project) => !DEMO_BUSINESSES.has(project.business)); localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(cleaned)); return cleaned; } catch { return initialProjects; } });
