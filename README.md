@@ -42,10 +42,10 @@ npm run build
 2. Create the production D1 database and add its ID to `wrangler.jsonc`:
 
    ```bash
-   npx wrangler d1 create webbon-db --binding DB --update-config
+   npx wrangler d1 create webbon-db
    ```
 
-   If Wrangler reports that the database already exists, run `npx wrangler d1 list`, copy its ID, and add the `database_id` field to the `DB` entry in `wrangler.jsonc`.
+   Copy the returned database ID into the existing `DB` entry in `wrangler.jsonc` as `"database_id": "YOUR_REAL_DATABASE_ID"`. Do not create a second `DB` binding. If the database already exists, run `npx wrangler d1 list` and use the ID shown there.
 
 3. Apply the versioned schema to the remote database:
 
