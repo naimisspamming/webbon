@@ -1,50 +1,89 @@
 # Webbon
 
-Webbon is a fast and easy website operations workspace for creating professional, responsive websites for local businesses. The platform is designed for a staff-operated workflow: staff collect business details, build websites using reusable templates and tools, review quality, share previews, and publish approved websites.
+Webbon is a staff-operated website workspace for building and managing client websites manually. It is not AI-powered.
 
-## Current foundation
+## Current capabilities
 
-- Responsive staff dashboard and project overview
-- Website project list with search and status filters
-- Create-project form for business name, category, location, staff assignment, and notes
-- Project status updates and a starter production-readiness checklist
-- Manual website editor with category-based layouts for ecommerce and travel agencies, editable business copy, contact details, service cards, navigation labels, and brand colours
-- E-commerce product catalogue editor with product names, prices, collections, descriptions, and responsive product-card preview
-- Travel agency package editor with destination, duration, starting price, descriptions, and travel enquiry preview
-- Category-specific starter copy, colour palettes, navigation labels, and service presets
-- Optional WhatsApp contact field
-- Responsive draft preview with desktop/mobile viewport toggles
-- Browser-local draft persistence and single-file HTML export
-- Cloudflare Workers Static Assets configuration, health endpoint, and deployment guide
-- Responsive desktop, tablet, and mobile layout
-- React + TypeScript + Vite foundation
+- Responsive staff dashboard and website project tracking
+- Category-based website editor, including ecommerce Clean, Elegant, and Bold themes and travel agency layouts
+- Editable business details, pages, services, products, and travel packages
+- Single-file HTML export for manual publishing
+- Cloudflare Worker API for project creation, project status updates, and website draft persistence
+- Cloudflare D1 schema for businesses, websites, versions, activity, users, sessions, products, orders, order items, travel bookings, and contact submissions
+- Cloudflare Access JWT verification on data APIs
 
-## Run locally
+## Requirements
 
-Requirements: Node.js 20 or newer.
+- Node.js 20+
+- A Cloudflare account with Workers, D1, and Cloudflare Zero Trust / Access enabled
+- GitHub connected to the Cloudflare Worker deployment
+
+## Local development
 
 ```bash
 npm install
 npm run dev
 ```
 
-Create a production build:
+Build locally:
 
 ```bash
 npm run build
-npm run preview
 ```
 
-## Important scope note
+## Configure the production D1 database
 
-This is an initial frontend foundation. Project data currently lives in browser memory and sample projects are demonstration data. A database, authentication and role permissions, real website editor, template renderer, preview URLs, hosting/domain integrations, and persistent publishing workflow still need to be implemented before production use.
+1. Clone this repository and authenticate Wrangler:
 
-Website content is created and reviewed by staff; this project does **not** use AI to generate websites.
+   ```bash
+   npx wrangler login
+   ```
 
-## Suggested next implementation steps
+2. Create the production D1 database and add its ID to `wrangler.jsonc`:
 
-1. Add authentication and staff/admin roles.
-2. Persist business and website records in a database.
-3. Build a reusable multi-page website editor and page/template system.
-4. Add isolated preview sites and a QA checklist that staff can mark complete.
-5. Add production deployment, domain/HTTPS management, forms, backups, and audit logs.
+   ```bash
+   npx wrangler d1 create webbon-db --binding DB --update-config
+   ```
+
+   If Wrangler reports that the database already exists, run `npx wrangler d1 list`, copy its ID, and add the `database_id` field to the `DB` entry in `wrangler.jsonc`.
+
+3. Apply the versioned schema to the remote database:
+
+   ```bash
+   npx wrangler d1 migrations apply webbon-db --remote
+   ```
+
+4. Confirm the `DB` binding points to `webbon-db` in `wrangler.jsonc`. Commit and push the updated config so Cloudflare deploys the same binding.
+
+## Protect the workspace with Cloudflare Access
+
+The dashboard and data API are an internal staff workspace. Do not expose it publicly without access control.
+
+1. In Cloudflare Zero Trust, open **Access → Applications** and create a **Self-hosted** application for the Webbon Worker. Prefer the Worker-level **Protect this Worker behind Access** option so the Worker, custom domain, `workers.dev` hostname, and preview URLs are protected.
+2. Create an **Allow** policy limited to the email addresses of authorized staff. Do not use an “Everyone” policy.
+3. In the Access application settings, copy the **Application Audience (AUD) Tag**.
+4. In the Cloudflare dashboard, open **Workers & Pages → webbon → Settings → Variables and Secrets** and add:
+   - `ACCESS_TEAM_DOMAIN`: your team hostname, for example `your-team.cloudflareaccess.com` (do not include a path)
+   - `ACCESS_AUD`: the Access application AUD tag
+5. Redeploy the Worker after adding the variables.
+
+The Worker validates the signed `Cf-Access-Jwt-Assertion` token and its issuer, expiry, and audience before allowing database operations. Access itself controls which staff emails may enter the workspace.
+
+## Verify production
+
+Open `https://webbon.app/api/health` after deployment. The response should report `databaseConfigured: true` and `accessConfigured: true`. Then open the workspace, sign in through Cloudflare Access, create a test project, refresh the page, and confirm the project is still present. Delete the test project manually from the dashboard only if you have added a delete workflow; otherwise remove it from the D1 database after confirming persistence.
+
+## API routes currently implemented
+
+- `GET /api/health` — health and configuration status
+- `GET /api/projects` — list projects from D1
+- `POST /api/projects` — create a business and website record
+- `PATCH /api/projects/:id` — update project status or assigned staff member
+- `GET /api/sites/:id` — load a saved website draft
+- `PUT /api/sites/:id` — save a website draft and record a version
+
+The schema includes commerce and travel tables, but full checkout, payment processing, inventory workflows, travel booking workflows, user administration, and per-role permissions are not yet implemented. Do not advertise those as live features until their APIs and UI are completed and tested.
+
+## Deployment
+
+Cloudflare Workers Builds should deploy the `main` branch. Use `npm run build` as the build command and `npx wrangler deploy` as the deploy command. Check the latest GitHub Actions build and Cloudflare Worker deployment status after every change.
