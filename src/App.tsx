@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import WebsiteEditor from "./WebsiteEditor";
+import Login from "./Login";
 import "./editor.css";
 import {
   ArrowDownRight, ArrowUpRight, Bell, Blocks, Check, ChevronDown, ChevronLeft,
@@ -25,7 +26,7 @@ const navItems = [
   { label: "Businesses", icon: Building2, count: undefined },
   { label: "Team", icon: Users, count: undefined },
 ];
-function App() {
+function Workspace() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [apiState, setApiState] = useState<"loading" | "connected" | "error">("loading");
   useEffect(() => { let active = true; fetch("/api/projects", { credentials: "same-origin" }).then(async (response) => { if (!response.ok) throw new Error((await response.json().catch(() => ({})) as { error?: string }).error || "Database connection failed."); return response.json() as Promise<{ projects: Project[] }>; }).then((data) => { if (active) { setProjects(data.projects || []); setApiState("connected"); } }).catch(() => { if (active) setApiState("error"); }); return () => { active = false; }; }, []);
@@ -255,6 +256,23 @@ function App() {
 
 function StatCard({ label, value, icon, trend, tone }: { label: string; value: string; icon: ReactNode; trend: string; tone: string }) {
   return <article className="stat-card"><div className="stat-top"><span>{label}</span><span className={"stat-icon stat-" + tone}>{icon}</span></div><div className="stat-value">{value}</div><div className="stat-foot"><span className="stat-foot-icon">{tone === "green" ? <ArrowUpRight size={14}/> : tone === "amber" ? <Clock3 size={13}/> : tone === "violet" ? <Eye size={13}/> : <ArrowDownRight size={14}/>}</span>{trend}</div></article>;
+}
+
+
+function App() {
+  const [authenticated, setAuthenticated] = useState(false);
+  const [checking, setChecking] = useState(true);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/auth/me", { credentials: "same-origin" })
+      .then((response) => { if (active) setAuthenticated(response.ok); })
+      .catch(() => { if (active) setAuthenticated(false); })
+      .finally(() => { if (active) setChecking(false); });
+    return () => { active = false; };
+  }, []);
+  if (checking) return <div style={{minHeight:"100vh",display:"grid",placeItems:"center",fontFamily:"Inter,system-ui,sans-serif",color:"#555"}}>Loading Webbon…</div>;
+  if (!authenticated) return <Login onLogin={() => setAuthenticated(true)} />;
+  return <Workspace />;
 }
 
 export default App;
