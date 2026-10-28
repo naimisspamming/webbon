@@ -525,3 +525,79 @@ input,select,textarea{min-width:0;max-width:100%}
   .table-footer{gap:8px;flex-wrap:wrap}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* Final mobile fix: eliminate page-level and table-level horizontal scrolling */
+html{overflow-x:clip;max-width:100%}
+body,#root,.app-shell,.main-area,.page-content{overflow-x:clip;max-width:100%;width:100%}
+@supports not (overflow:clip){html,body,#root,.app-shell,.main-area,.page-content{overflow-x:hidden}}
+@media(max-width:760px){
+  .main-area{margin-left:0!important;width:100%!important;max-width:100vw!important}
+  .page-content{width:100%;max-width:100%;padding:18px 12px 24px!important}
+  .topbar{width:100%;max-width:100%;padding-inline:12px!important}
+  .welcome-row{width:100%;min-width:0;align-items:flex-start}
+  .welcome-row>div{min-width:0;overflow-wrap:anywhere}
+  .stats-grid,.quick-start,.projects-section,.workspace-page-card,.page-footer{width:100%;min-width:0;max-width:100%}
+  .quick-copy,.quick-steps,.section-heading>div{min-width:0;max-width:100%;overflow-wrap:anywhere}
+  /* The website table becomes stacked cards instead of requiring sideways swiping. */
+  .project-table-wrap{width:100%;max-width:100%;overflow:visible!important}
+  .project-table{display:block;width:100%;min-width:0!important;white-space:normal!important}
+  .project-table thead{display:none}
+  .project-table tbody{display:flex;flex-direction:column;width:100%;min-width:0}
+  .project-table tbody tr.project-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px 10px;width:100%;min-width:0;padding:14px 12px;border-bottom:1px solid #edf0e9}
+  .project-table tbody tr.project-row>td{display:block;height:auto;min-width:0;width:auto;padding:0!important;border:0;overflow-wrap:anywhere;white-space:normal}
+  .project-table tbody tr.project-row>td:first-child{grid-column:1/-1}
+  .project-table tbody tr.project-row>td:nth-child(2){grid-column:1;grid-row:2;align-self:center}
+  .project-table tbody tr.project-row>td:nth-child(3){grid-column:1/-1;grid-row:3}
+  .project-table tbody tr.project-row>td:nth-child(4){grid-column:1;grid-row:4;align-self:center}
+  .project-table tbody tr.project-row>td:nth-child(5){grid-column:2;grid-row:4;align-self:center;justify-self:end}
+  .business-cell{min-width:0!important;width:100%;gap:10px}
+  .business-info{min-width:0;overflow-wrap:anywhere}
+  .business-info strong,.business-info span{overflow-wrap:anywhere;white-space:normal;line-height:1.4}
+  .business-info span{display:block}
+  .business-info i{display:inline-block;margin:0 4px}
+  .assigned-cell{min-width:0;flex-wrap:wrap;overflow-wrap:anywhere}
+  .project-table tbody tr:not(.project-row){display:block;width:100%}
+  .project-table tbody tr:not(.project-row)>td{display:block;width:100%;padding:12px!important;white-space:normal}
+  .project-toolbar{width:100%;min-width:0;padding-inline:12px}
+  .project-tabs{width:100%;max-width:100%;overflow-x:auto}
+  .table-actions{width:100%;min-width:0}
+  .table-search{min-width:0;flex:1}
+  .workspace-data-row{width:100%;max-width:100%}
+  .workspace-publish-list,.workspace-publish-row,.workspace-publish-info{min-width:0;max-width:100%}
+  .workspace-publish-row{grid-template-columns:35px minmax(0,1fr) auto!important;gap:9px!important}
+  .workspace-publish-row .status-pill{grid-column:2;justify-self:start;max-width:100%;white-space:normal}
+  .workspace-publish-row .row-open{grid-column:3;grid-row:1}
+  .page-footer{flex-wrap:wrap;line-height:1.5}
+  .top-search-box{left:10px!important;right:10px!important;width:auto!important;max-width:none!important}
+  .notification-popover{right:-5px!important;width:min(270px,calc(100vw - 24px))!important}
+  /* Compact popup form: no oversized sheet or giant gaps on phones. */
+  .modal-backdrop{align-items:center!important;justify-content:center!important;padding:10px!important;overflow-y:auto!important}
+  .modal,.project-detail-modal{width:100%!important;max-width:440px!important;max-height:84dvh!important;min-height:0!important;padding:16px 14px!important;border-radius:14px!important;overflow-y:auto!important}
+  .modal-heading{gap:8px!important;margin-bottom:14px!important}
+  .modal-kicker{font-size:8px!important}
+  .modal-heading h2,.detail-title-row h2{font-size:19px!important;line-height:1.15!important;margin:4px 0!important}
+  .modal-heading p{font-size:11px!important;line-height:1.4!important}
+  .modal form{gap:10px!important}
+  .field-label{gap:5px!important;font-size:11px!important}
+  .field-label input,.field-label select{min-height:36px!important;height:36px;padding:7px 9px!important;font-size:16px!important}
+  .field-label textarea{min-height:68px!important;padding:8px 9px!important;font-size:16px!important}
+  .modal-note{padding:9px!important;font-size:10px!important;line-height:1.4!important}
+  .modal-actions{position:static!important;bottom:auto!important;margin:2px 0 0!important;padding:10px 0 0!important;background:#fff!important;border-top:1px solid #edf0e9!important}
+  .modal-actions button{min-height:38px!important;height:38px!important}
+  .detail-stats{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .detail-stats>div{padding:8px 6px!important}
+  .detail-checklist{margin-block:12px}
+}
+@media(max-width:420px){
+  .page-content{padding-inline:10px!important}
+  .project-table tbody tr.project-row{padding:12px 10px}
+  .status-pill{max-width:100%;white-space:normal;height:auto;min-height:24px;line-height:1.35;padding:5px 7px}
+  .modal-backdrop{padding:8px!important}
+  .modal,.project-detail-modal{max-height:82dvh!important;padding:14px 12px!important}
+  .modal-actions{gap:7px!important}
+  .modal-actions button{padding-inline:8px!important;font-size:11px!important}
+  .detail-stats{grid-template-columns:minmax(0,1fr)!important}
+  .detail-stats>div{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .workspace-publish-row{grid-template-columns:30px minmax(0,1fr) 28px!important}
+}
