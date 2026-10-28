@@ -124,7 +124,7 @@ function Workspace() {
             <button onClick={() => notify("Workspace settings are coming soon.")}>Workspace settings <ChevronRight size={14}/></button>
           </div>
           <button className="nav-item" onClick={() => notify("Help center will be available soon.")}><LifeBuoy size={18}/><span>Help center</span></button>
-          <button className="profile-row" onClick={() => notify("Account settings will be available soon.")}>
+          <button className="profile-row" onClick={async () => { await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" }); window.location.reload(); }}>
             <div className="avatar avatar-profile">NR</div><div className="profile-copy"><strong>Naimur Rahman</strong><span>Administrator</span></div><MoreHorizontal size={19} className="muted-icon"/>
           </button>
         </div>
