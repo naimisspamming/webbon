@@ -163,10 +163,10 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     }
     const payload = encodeBase64Url(new TextEncoder().encode(JSON.stringify({ email: env.ADMIN_EMAIL.toLowerCase(), exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 })));
     const token = payload + "." + await signSession(payload, env.AUTH_SECRET);
-    return new Response(JSON.stringify({ ok: true, email: env.ADMIN_EMAIL }), { status: 200, headers: { ...noStore, "Content-Type": "application/json", "Set-Cookie": "webbon_session=" + token + "; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800" } });
+    return new Response(JSON.stringify({ ok: true, email: env.ADMIN_EMAIL }), { status: 200, headers: { ...noStore, "Content-Type": "application/json", "Set-Cookie": "webbon_session=" + token + "; Domain=webbon.app; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800" } });
   }
   if (url.pathname === "/api/auth/logout" && request.method === "POST") {
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...noStore, "Content-Type": "application/json", "Set-Cookie": "webbon_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0" } });
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...noStore, "Content-Type": "application/json", "Set-Cookie": "webbon_session=; Domain=webbon.app; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0" } });
   }
   if (url.pathname === "/api/auth/me" && request.method === "GET") {
     const email = await sessionEmail(request, env);
