@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
 import {
   ArrowDownRight, ArrowUpRight, Bell, Blocks, Check, ChevronDown, ChevronLeft,
   ChevronRight, CircleHelp, Clock3, ExternalLink, FilePlus2, Filter, Globe2,
@@ -60,7 +61,7 @@ function App() {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 3200);
   };
-  const createProject = (event: React.FormEvent) => {
+  const createProject = (event: FormEvent) => {
     event.preventDefault();
     if (!form.business.trim()) return;
     const name = form.business.trim();
@@ -211,7 +212,7 @@ function App() {
   );
 }
 
-function StatCard({ label, value, icon, trend, tone }: { label: string; value: string; icon: React.ReactNode; trend: string; tone: string }) {
+function StatCard({ label, value, icon, trend, tone }: { label: string; value: string; icon: ReactNode; trend: string; tone: string }) {
   return <article className="stat-card"><div className="stat-top"><span>{label}</span><span className={"stat-icon stat-" + tone}>{icon}</span></div><div className="stat-value">{value}</div><div className="stat-foot"><span className="stat-foot-icon">{tone === "green" ? <ArrowUpRight size={14}/> : tone === "amber" ? <Clock3 size={13}/> : tone === "violet" ? <Eye size={13}/> : <ArrowDownRight size={14}/>}</span>{trend}</div></article>;
 }
 
