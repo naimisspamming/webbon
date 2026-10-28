@@ -10,7 +10,7 @@ export type EditableSite = {
 };
 const STORAGE_KEY="webbon-sites-v1";
 const categories=["Retail & ecommerce","Fashion & apparel","Beauty & personal care","Electronics","Home & living","Food & grocery","Restaurant & café","Travel agency & tours","Hotel & accommodation","Healthcare","Dental clinic","Fitness & wellness","Real estate","Home services","Professional services","Education","Portfolio & creative","Other"];
-const templates=[{id:"studio",name:"Studio",note:"Minimal · Editorial",color:"#d7f0bd"},{id:"classic",name:"Classic",note:"Trustworthy · Timeless",color:"#dce8f5"},{id:"bold",name:"Bold",note:"Confident · Modern",color:"#f6d9c7"}];
+const templates=[{id:"studio",name:"Studio",note:"Minimal · Editorial",color:"#d7f0bd"},{id:"classic",name:"Classic",note:"Trustworthy · Timeless",color:"#dce8f5"},{id:"bold",name:"Bold",note:"Confident · Modern",color:"#f6d9c7"},{id:"shop",name:"Commerce",note:"Product · Retail",color:"#dcebd1"},{id:"travel",name:"Travel",note:"Journey · Editorial",color:"#cde7df"}];
 const isShopCategory=(c:string)=>/retail|ecommerce|fashion|apparel|electronics|home & living|food & grocery|beauty/i.test(c);
 const isTravelCategory=(c:string)=>/travel|tour|hotel|accommodation/i.test(c);
 const categoryDefaults=(category:string)=>{
