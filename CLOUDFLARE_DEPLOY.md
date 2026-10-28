@@ -22,7 +22,7 @@ Requirements: Node.js 20+ and a Cloudflare account.
    ```
 4. Deploy:
    ```bash
-   npx wrangler deploy
+   npm run deploy
    ```
 5. Open the Workers & Pages dashboard, select `webbon`, and check the assigned `workers.dev` URL. Test `/api/health`.
 
@@ -31,7 +31,7 @@ Requirements: Node.js 20+ and a Cloudflare account.
 In Cloudflare Dashboard:
 1. Go to **Workers & Pages** and create a Worker.
 2. Choose **Connect to Git** and connect `naimisspamming/webbon`.
-3. Use `npm run build` as the build command and `dist` as the assets/build output directory. If the setup asks for a deployment command, use the Workers build/deploy flow supported by the current dashboard and repository configuration.
+3. Configure the build command as `npm run build` and the deploy command as `npx wrangler deploy`. Keep `wrangler.jsonc` in the repository root so Cloudflare uses its Worker and static-assets configuration.
 4. Confirm the deployed Worker serves the single-page app and that `/api/health` returns JSON.
 
 Cloudflare's dashboard labels can change. The checked-in `wrangler.jsonc` is the canonical Worker configuration.
