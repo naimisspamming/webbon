@@ -52,10 +52,10 @@ function App() {
   }), [projects, query, filter, activeNav]);
 
   const counts = {
-    total: projects.length + 19,
-    progress: projects.filter((p) => p.status === "In progress").length + 6,
-    review: projects.filter((p) => p.status === "Ready for review").length + 3,
-    live: projects.filter((p) => p.status === "Published").length + 14,
+    total: projects.length,
+    progress: projects.filter((p) => p.status === "In progress").length,
+    review: projects.filter((p) => p.status === "Ready for review").length,
+    live: projects.filter((p) => p.status === "Published").length,
   };
   const notify = (message: string) => {
     setNotice(message);
