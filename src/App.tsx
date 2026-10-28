@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
+import WebsiteEditor from "./WebsiteEditor";
+import "./editor.css";
 import {
   ArrowDownRight, ArrowUpRight, Bell, Blocks, Check, ChevronDown, ChevronLeft,
   ChevronRight, CircleHelp, Clock3, ExternalLink, FilePlus2, Filter, Globe2,
@@ -40,6 +42,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [editorProject, setEditorProject] = useState<Project | null>(null);
   const [form, setForm] = useState({ business: "", category: "Professional services", location: "", owner: "Maya Chen", notes: "" });
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -204,9 +207,10 @@ function App() {
           <label className="field-label">Project status<select value={selectedProject.status} onChange={(e) => changeStatus(selectedProject, e.target.value as ProjectStatus)}>{["In progress","Ready for review","Preview sent","Published","Needs information"].map((s) => <option key={s}>{s}</option>)}</select></label>
           <div className="detail-checklist"><strong>Production readiness checklist</strong>{[{label:"Business details confirmed",done:false},{label:"Mobile layout checked",done:false},{label:"Contact links and forms tested",done:false},{label:"SEO and page metadata checked",done:false},{label:"Client approval received",done:false}].map((item) => <div className="checklist-row" key={item.label}><span className="check-box"/><span>{item.label}</span></div>)}</div>
           <div className="modal-note"><CircleHelp size={17}/><span>Website editing, hosting, and live publishing integrations are not connected yet in this foundation.</span></div>
-          <div className="modal-actions"><button className="secondary-button" onClick={() => setSelectedProject(null)}>Close</button><button className="primary-button" onClick={() => {notify("Website editor integration is the next implementation step.");setSelectedProject(null);}}><PanelsTopLeft size={16}/> Open editor <ArrowUpRight size={14}/></button></div>
+          <div className="modal-actions"><button className="secondary-button" onClick={() => setSelectedProject(null)}>Close</button><button className="primary-button" onClick={() => {setEditorProject(selectedProject);setSelectedProject(null);}}><PanelsTopLeft size={16}/> Open editor <ArrowUpRight size={14}/></button></div>
         </section></div>}
 
+      {editorProject && <WebsiteEditor project={{ id: editorProject.id, business: editorProject.business, category: editorProject.category, location: editorProject.location }} onClose={() => setEditorProject(null)} onSaved={() => notify("Website draft saved on this device.")} />}
       {notice && <div className="toast"><span className="toast-check"><Check size={15}/></span>{notice}<button onClick={() => setNotice("")} aria-label="Dismiss"><X size={15}/></button></div>}
     </div>
   );
