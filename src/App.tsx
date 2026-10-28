@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import WebsiteEditor from "./WebsiteEditor";
 import "./editor.css";
@@ -15,6 +15,7 @@ type Project = {
   id: number; business: string; category: string; location: string; owner: string;
   initials: string; color: string; status: ProjectStatus; updated: string; pages: number;
 };
+const PROJECTS_STORAGE_KEY = "webbon-projects-v1";
 const initialProjects: Project[] = [
   { id: 1, business: "Northstar Dental", category: "Healthcare", location: "Austin, TX", owner: "Maya Chen", initials: "ND", color: "mint", status: "Ready for review", updated: "12 min ago", pages: 5 },
   { id: 2, business: "Common Grounds", category: "Restaurant & café", location: "Portland, OR", owner: "Eli Brooks", initials: "CG", color: "peach", status: "In progress", updated: "34 min ago", pages: 4 },
@@ -33,7 +34,8 @@ const navItems = [
   { label: "Team", icon: Users },
 ];
 function App() {
-  const [projects, setProjects] = useState(initialProjects);
+  const [projects, setProjects] = useState<Project[]>(() => { try { const stored = localStorage.getItem(PROJECTS_STORAGE_KEY); return stored ? JSON.parse(stored) as Project[] : initialProjects; } catch { return initialProjects; } });
+  useEffect(() => { try { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects)); } catch { /* Browser storage may be unavailable; app remains usable for this session. */ } }, [projects]);
   const [activeNav, setActiveNav] = useState("Overview");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All websites");
