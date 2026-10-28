@@ -16,25 +16,20 @@ type Project = {
   initials: string; color: string; status: ProjectStatus; updated: string; pages: number;
 };
 const PROJECTS_STORAGE_KEY = "webbon-projects-v1";
-const initialProjects: Project[] = [
-  { id: 1, business: "Northstar Dental", category: "Healthcare", location: "Austin, TX", owner: "Maya Chen", initials: "ND", color: "mint", status: "Ready for review", updated: "12 min ago", pages: 5 },
-  { id: 2, business: "Common Grounds", category: "Restaurant & café", location: "Portland, OR", owner: "Eli Brooks", initials: "CG", color: "peach", status: "In progress", updated: "34 min ago", pages: 4 },
-  { id: 3, business: "Form & Field Studio", category: "Home services", location: "Denver, CO", owner: "Nora Patel", initials: "FF", color: "lavender", status: "Preview sent", updated: "1 hour ago", pages: 6 },
-  { id: 4, business: "Everwell Wellness", category: "Health & wellness", location: "Chicago, IL", owner: "Maya Chen", initials: "EW", color: "blue", status: "Needs information", updated: "3 hours ago", pages: 4 },
-  { id: 5, business: "Oak & Ivy Legal", category: "Professional services", location: "Raleigh, NC", owner: "Sam Rivera", initials: "OI", color: "sand", status: "Published", updated: "Yesterday", pages: 7 },
-];
+const initialProjects: Project[] = [];
+const DEMO_BUSINESSES = new Set(["Northstar Dental", "Common Grounds", "Form & Field Studio", "Everwell Wellness", "Oak & Ivy Legal"]);
 const statusClass: Record<ProjectStatus, string> = {
   "In progress": "status-progress", "Ready for review": "status-review", "Preview sent": "status-preview",
   "Published": "status-live", "Needs information": "status-needs"
 };
 const navItems = [
   { label: "Overview", icon: LayoutDashboard },
-  { label: "Websites", icon: PanelsTopLeft, count: "24" },
+  { label: "Websites", icon: PanelsTopLeft },
   { label: "Businesses", icon: Building2 },
   { label: "Team", icon: Users },
 ];
 function App() {
-  const [projects, setProjects] = useState<Project[]>(() => { try { const stored = localStorage.getItem(PROJECTS_STORAGE_KEY); return stored ? JSON.parse(stored) as Project[] : initialProjects; } catch { return initialProjects; } });
+  const [projects, setProjects] = useState<Project[]>(() => { try { const stored = localStorage.getItem(PROJECTS_STORAGE_KEY); const parsed = stored ? JSON.parse(stored) as Project[] : initialProjects; const cleaned = parsed.filter((project) => !DEMO_BUSINESSES.has(project.business)); localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(cleaned)); return cleaned; } catch { return initialProjects; } });
   useEffect(() => { try { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects)); } catch { /* Browser storage may be unavailable; app remains usable for this session. */ } }, [projects]);
   const [activeNav, setActiveNav] = useState("Overview");
   const [query, setQuery] = useState("");
@@ -45,7 +40,7 @@ function App() {
   const [notice, setNotice] = useState("");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [editorProject, setEditorProject] = useState<Project | null>(null);
-  const [form, setForm] = useState({ business: "", category: "Professional services", location: "", owner: "Maya Chen", notes: "" });
+  const [form, setForm] = useState({ business: "", category: "Professional services", location: "", owner: "Unassigned", notes: "" });
   const [searchOpen, setSearchOpen] = useState(false);
 
   const filteredProjects = useMemo(() => projects.filter((p) => {
@@ -78,7 +73,7 @@ function App() {
       status: "In progress", updated: "Just now", pages: 1
     };
     setProjects((current) => [project, ...current]);
-    setForm({ business: "", category: "Professional services", location: "", owner: "Maya Chen", notes: "" });
+    setForm({ business: "", category: "Professional services", location: "", owner: "Unassigned", notes: "" });
     setShowCreate(false);
     setFilter("All websites");
     setActiveNav("Websites");
@@ -188,7 +183,7 @@ function App() {
               </tr>)}
               {filteredProjects.length === 0 && <tr><td colSpan={5}><div className="empty-state"><Search size={22}/><strong>No websites found</strong><span>Try a different search or filter, or create a new website.</span><button className="text-button" onClick={() => {setQuery("");setFilter("All websites");}}>Clear filters</button></div></td></tr>}
             </tbody></table></div>
-            <div className="table-footer"><span>Showing <strong>{filteredProjects.length}</strong> of <strong>{projects.length}</strong> sample and created projects</span><div className="pagination"><button disabled aria-label="Previous page"><ChevronLeft size={16}/></button><button className="page-current">1</button><button disabled aria-label="Next page"><ChevronRight size={16}/></button></div></div>
+            <div className="table-footer"><span>Showing <strong>{filteredProjects.length}</strong> of <strong>{projects.length}</strong> projects</span><div className="pagination"><button disabled aria-label="Previous page"><ChevronLeft size={16}/></button><button className="page-current">1</button><button disabled aria-label="Next page"><ChevronRight size={16}/></button></div></div>
           </section>
 
           <footer className="page-footer"><span>Made for the people who make websites happen.</span><span><CircleHelp size={14}/> Webbon workspace <i/> v0.1</span></footer>
@@ -198,7 +193,7 @@ function App() {
       {showCreate && <div className="modal-backdrop" onMouseDown={(e) => {if(e.target === e.currentTarget) setShowCreate(false);}}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="create-title"><div className="modal-heading"><div><span className="modal-kicker">NEW PROJECT</span><h2 id="create-title">Start a website</h2><p>Add the business details to open a new project for your team.</p></div><button className="icon-button" onClick={() => setShowCreate(false)} aria-label="Close"><X size={19}/></button></div>
         <form onSubmit={createProject}><label className="field-label">Business name <span>*</span><input required autoFocus placeholder="e.g. The Corner Coffee Co." value={form.business} onChange={(e) => setForm({...form,business:e.target.value})}/></label>
           <div className="form-grid"><label className="field-label">Business category<select value={form.category} onChange={(e) => setForm({...form,category:e.target.value})}><option>Professional services</option><option>Restaurant & café</option><option>Healthcare</option><option>Home services</option><option>Health & wellness</option><option>Retail & ecommerce</option><option>Fashion & apparel</option><option>Beauty & personal care</option><option>Electronics</option><option>Home & living</option><option>Food & grocery</option><option>Travel agency & tours</option><option>Hotel & accommodation</option><option>Fitness & wellness</option><option>Real estate</option><option>Education</option><option>Portfolio & creative</option><option>Other</option></select></label><label className="field-label">Location<input placeholder="City, country" value={form.location} onChange={(e) => setForm({...form,location:e.target.value})}/></label></div>
-          <label className="field-label">Assign to<select value={form.owner} onChange={(e) => setForm({...form,owner:e.target.value})}><option>Maya Chen</option><option>Eli Brooks</option><option>Nora Patel</option><option>Sam Rivera</option></select></label>
+          <label className="field-label">Assigned staff member<input placeholder="Name (optional)" value={form.owner === "Unassigned" ? "" : form.owner} onChange={(e) => setForm({...form,owner:e.target.value.trim() || "Unassigned"})}/></label>
           <label className="field-label">Brief / notes <span className="optional-label">OPTIONAL</span><textarea rows={3} placeholder="Services, current website, required pages, brand preferences..." value={form.notes} onChange={(e) => setForm({...form,notes:e.target.value})}/></label>
           <div className="modal-note"><CircleCheck size={17}/><span>This creates a project for staff to build manually. No AI generation is triggered.</span></div>
           <div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setShowCreate(false)}>Cancel</button><button type="submit" className="primary-button"><Plus size={16}/> Create project</button></div>
