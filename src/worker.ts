@@ -66,11 +66,11 @@ async function verifyAccessJwt(request: Request, env: Env): Promise<boolean> {
     if (!(aud === env.ACCESS_AUD || (Array.isArray(aud) && aud.includes(env.ACCESS_AUD)))) return false;
     const certResponse = await fetch(issuer + "/cdn-cgi/access/certs", { cf: { cacheTtl: 300, cacheEverything: true } } as RequestInit);
     if (!certResponse.ok) return false;
-    const certs = await certResponse.json() as { keys?: JsonWebKey[] };
+    const certs = await certResponse.json() as { keys?: Array<JsonWebKey & { kid?: string }> };
     const jwk = certs.keys?.find((key) => key.kid === header.kid);
     if (!jwk) return false;
     const publicKey = await crypto.subtle.importKey("jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
-    return crypto.subtle.verify("RSASSA-PKCS1-v1_5", publicKey, decodeBase64Url(parts[2]), new TextEncoder().encode(parts[0] + "." + parts[1]));
+    return crypto.subtle.verify("RSASSA-PKCS1-v1_5", publicKey, decodeBase64Url(parts[2]).buffer as ArrayBuffer, new TextEncoder().encode(parts[0] + "." + parts[1]));
   } catch {
     return false;
   }
