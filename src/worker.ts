@@ -83,7 +83,7 @@ async function verifyAccessJwt(request: Request, env: Env): Promise<boolean> {
 function encodeBase64Url(value: Uint8Array): string {
   let binary = "";
   for (const byte of value) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/=/g, "").replace(/\\+/g, "-").replace(/\\//g, "_");
+  return btoa(binary).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 async function signSession(payload: string, secret: string): Promise<string> {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
