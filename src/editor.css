@@ -60,3 +60,60 @@
   .editor-colors{grid-template-columns:minmax(0,1fr)}
   .mock-product-grid{grid-template-columns:minmax(0,1fr)}
 }
+
+
+/* Mobile-first editor hardening: panels, preview, navigation and all editor dialogs */
+.editor-overlay{position:fixed;inset:0;width:100%;max-width:100vw;height:100dvh;min-height:0;overflow:hidden}
+.editor-topbar>*{min-width:0}
+.editor-top-actions{min-width:0}
+.editor-panel,.preview-stage,.site-preview-content,.editor-sidebar,.editor-content{min-width:0;max-width:100%}
+.editor-overlay.editor-is-edit .editor-panel{max-width:100vw;overscroll-behavior:contain}
+.editor-field,.editor-field-row,.editor-page-list,.editor-service-row,.editor-data-card,.editor-templates,.editor-colors{min-width:0;max-width:100%}
+.editor-field input,.editor-field textarea,.editor-field select,.editor-page-list input,.editor-service-row input,.editor-data-card input,.editor-data-card textarea{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.editor-panel-footer{max-width:100%;padding-bottom:env(safe-area-inset-bottom)}
+.preview-stage{min-width:0;max-width:100%;overscroll-behavior:contain}
+.canvas-toolbar{min-width:0;max-width:100%;flex-wrap:wrap}
+.canvas-controls{min-width:0;flex-wrap:wrap}
+.mock-site-header{min-width:0;flex-wrap:wrap}
+.mock-site-header nav{min-width:0;flex-wrap:wrap}
+.mock-site-hero,.mock-commerce-section,.mock-site-services,.mock-site-footer{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.mock-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mock-product-grid article{min-width:0;max-width:100%}
+.mock-product-grid img,.mock-product-image img{max-width:100%;height:auto;object-fit:cover}
+.editor-overlay button,.editor-overlay input,.editor-overlay select,.editor-overlay textarea{touch-action:manipulation}
+@media(max-width:760px){
+  .editor-overlay{height:100dvh}
+  .editor-topbar{height:56px;min-height:56px;gap:5px;padding:0 8px}
+  .editor-back{flex:0 0 34px;min-width:34px;min-height:40px;overflow:hidden;font-size:0;gap:0}
+  .editor-back svg{flex-shrink:0}
+  .editor-doc-title{flex:1;min-width:0;overflow:hidden}
+  .editor-doc-title>div{min-width:0;overflow:hidden}
+  .editor-doc-title strong{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .editor-doc-title small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .editor-top-actions{gap:4px}
+  .editor-secondary,.editor-save,.editor-export{min-width:38px;min-height:40px;height:40px;padding:0 9px}
+  .editor-overlay.editor-is-edit .editor-panel{inset:56px 0 0;width:100%;max-width:100vw;padding:16px 14px calc(24px + env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain}
+  .editor-panel-footer{position:sticky;bottom:calc(-24px - env(safe-area-inset-bottom));margin:16px -14px calc(-24px - env(safe-area-inset-bottom));padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #e5e8df}
+  .preview-stage{width:100%;max-width:100vw;overflow:auto}
+  .canvas-toolbar{padding:6px 8px;gap:6px}
+  .canvas-controls{gap:4px}
+  .mock-site-header{gap:8px;padding:12px}
+  .mock-site-header nav{flex:1;gap:6px;justify-content:flex-end}
+  .mock-site-header nav span{font-size:10px}
+  .mock-site-hero{padding:30px 18px}
+  .mock-site-hero h1{font-size:clamp(28px,8vw,44px);overflow-wrap:anywhere}
+  .mock-site-hero p{font-size:13px;overflow-wrap:anywhere}
+  .mock-product-grid{gap:8px}
+  .mock-product-image{height:clamp(84px,26vw,130px)}
+  .mock-site-services>div{gap:8px}
+}
+@media(max-width:390px){
+  .editor-doc-title strong{font-size:10px}
+  .editor-doc-title small{font-size:8px}
+  .editor-top-actions{gap:3px}
+  .editor-secondary,.editor-export{width:36px;min-width:36px;padding:0}
+  .editor-save{width:38px;min-width:38px;padding:0;font-size:0;gap:0}
+  .editor-save svg{flex-shrink:0}
+  .mock-site-header nav span:nth-child(n+3){display:none}
+  .mock-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
