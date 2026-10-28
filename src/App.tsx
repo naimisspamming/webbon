@@ -15,9 +15,6 @@ type Project = {
   id: number; business: string; category: string; location: string; owner: string;
   initials: string; color: string; status: ProjectStatus; updated: string; pages: number;
 };
-const PROJECTS_STORAGE_KEY = "webbon-projects-v1";
-const initialProjects: Project[] = [];
-const DEMO_BUSINESSES = new Set(["Northstar Dental", "Common Grounds", "Form & Field Studio", "Everwell Wellness", "Oak & Ivy Legal"]);
 const statusClass: Record<ProjectStatus, string> = {
   "In progress": "status-progress", "Ready for review": "status-review", "Preview sent": "status-preview",
   "Published": "status-live", "Needs information": "status-needs"
@@ -29,8 +26,9 @@ const navItems = [
   { label: "Team", icon: Users, count: undefined },
 ];
 function App() {
-  const [projects, setProjects] = useState<Project[]>(() => { try { const stored = localStorage.getItem(PROJECTS_STORAGE_KEY); const parsed = stored ? JSON.parse(stored) as Project[] : initialProjects; const cleaned = parsed.filter((project) => !DEMO_BUSINESSES.has(project.business)); localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(cleaned)); return cleaned; } catch { return initialProjects; } });
-  useEffect(() => { try { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects)); } catch { /* Browser storage may be unavailable; app remains usable for this session. */ } }, [projects]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [apiState, setApiState] = useState<"loading" | "connected" | "error">("loading");
+  useEffect(() => { let active = true; fetch("/api/projects", { credentials: "same-origin" }).then(async (response) => { if (!response.ok) throw new Error((await response.json().catch(() => ({})) as { error?: string }).error || "Database connection failed."); return response.json() as Promise<{ projects: Project[] }>; }).then((data) => { if (active) { setProjects(data.projects || []); setApiState("connected"); } }).catch(() => { if (active) setApiState("error"); }); return () => { active = false; }; }, []);
   const [activeNav, setActiveNav] = useState("Overview");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All websites");
@@ -61,28 +59,35 @@ function App() {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 3200);
   };
-  const createProject = (event: FormEvent) => {
+  const createProject = async (event: FormEvent) => {
     event.preventDefault();
     if (!form.business.trim()) return;
     const name = form.business.trim();
-    const project: Project = {
-      id: Date.now(), business: name, category: form.category,
-      location: form.location.trim() || "Location not added", owner: form.owner,
-      initials: name.split(/\s+/).slice(0, 2).map((word) => word[0]).join("").toUpperCase(),
-      color: ["mint", "peach", "lavender", "blue", "sand"][projects.length % 5],
-      status: "In progress", updated: "Just now", pages: 1
-    };
-    setProjects((current) => [project, ...current]);
-    setForm({ business: "", category: "Professional services", location: "", owner: "Unassigned", notes: "" });
-    setShowCreate(false);
-    setFilter("All websites");
-    setActiveNav("Websites");
-    notify("Project created. Add the business details and start building.");
+    try {
+      const response = await fetch("/api/projects", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ business: name, category: form.category, location: form.location.trim(), owner: form.owner, notes: form.notes }) });
+      const data = await response.json() as { project?: Project; error?: string };
+      if (!response.ok || !data.project) throw new Error(data.error || "Could not save the project to the database.");
+      setProjects((current) => [data.project!, ...current]);
+      setForm({ business: "", category: "Professional services", location: "", owner: "Unassigned", notes: "" });
+      setShowCreate(false);
+      setFilter("All websites");
+      setActiveNav("Websites");
+      notify("Project saved to the Webbon database.");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Database save failed. Check Cloudflare setup.");
+    }
   };
-  const changeStatus = (project: Project, status: ProjectStatus) => {
-    setProjects((current) => current.map((p) => p.id === project.id ? { ...p, status, updated: "Just now" } : p));
-    setSelectedProject({ ...project, status, updated: "Just now" });
-    notify(project.business + " moved to " + status.toLowerCase() + ".");
+  const changeStatus = async (project: Project, status: ProjectStatus) => {
+    try {
+      const response = await fetch("/api/projects/" + project.id, { method: "PATCH", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
+      const data = await response.json() as { project?: Project; error?: string };
+      if (!response.ok || !data.project) throw new Error(data.error || "Could not update project status.");
+      setProjects((current) => current.map((p) => p.id === project.id ? data.project! : p));
+      setSelectedProject(data.project);
+      notify(project.business + " saved to the database.");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Database update failed.");
+    }
   };
 
   return (
@@ -149,6 +154,7 @@ function App() {
             <button className="primary-button" onClick={() => setShowCreate(true)}><Plus size={17} strokeWidth={2.5}/> New website</button>
           </section>
 
+          {apiState !== "connected" && <div role="status" className="modal-note"><CircleHelp size={17}/><span>{apiState === "loading" ? "Connecting to the Webbon database…" : "Database unavailable. Configure the D1 binding and Cloudflare Access to load or save real projects."}</span></div>}
           <section className="stats-grid">
             <StatCard label="Total websites" value={String(counts.total).padStart(2, "0")} icon={<PanelsTopLeft size={18}/>} trend="All projects in your workspace" tone="ink"/>
             <StatCard label="In progress" value={String(counts.progress).padStart(2, "0")} icon={<Clock3 size={18}/>} trend="Being built by the team" tone="amber"/>
