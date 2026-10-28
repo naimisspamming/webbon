@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { ArrowLeft, Check, ChevronDown, Code2, ExternalLink, Eye, Globe2, Monitor, Palette, Plus, Save, Smartphone, Trash2, Upload, X } from "lucide-react";
 
 export type EditableSite = {
@@ -103,7 +104,7 @@ export default function WebsiteEditor({ project, onClose, onSaved }: Props) {
       </aside>}
       <main className={"editor-canvas " + (preview ? "preview-mode" : "")}>
         <div className="canvas-toolbar"><div className="canvas-breadcrumb"><Globe2 size={15}/><span>{site.title.toLowerCase().replace(/\s+/g,"-") || "untitled"}.preview</span><span className="preview-badge">DRAFT</span></div><div className="canvas-controls"><button className={device === "desktop" ? "active" : ""} onClick={() => setDevice("desktop")} aria-label="Desktop preview"><Monitor size={16}/></button><button className={device === "mobile" ? "active" : ""} onClick={() => setDevice("mobile")} aria-label="Mobile preview"><Smartphone size={16}/></button></div></div>
-        <div className="preview-stage"><div className={"site-preview-frame " + (device === "mobile" ? "mobile-preview" : "")}><div className="site-preview-content" style={{background:site.backgroundColor, "--site-brand":site.primaryColor} as React.CSSProperties}>
+        <div className="preview-stage"><div className={"site-preview-frame " + (device === "mobile" ? "mobile-preview" : "")}><div className="site-preview-content" style={{background:site.backgroundColor, "--site-brand":site.primaryColor} as CSSProperties}>
           <header className="mock-site-header"><strong>{site.title || "Your Business"}</strong><nav>{site.pages.filter(Boolean).map((page,i)=><span key={i}>{page}</span>)}</nav></header>
           <section className="mock-site-hero"><small>{site.category} {site.location && "· " + site.location}</small><h1>{site.tagline || "Your headline goes here."}</h1><p>{site.description}</p><span className="mock-site-cta">Let's talk ↗</span></section>
           <section className="mock-site-services"><small>WHAT WE DO</small><h2>Good work. Thoughtfully done.</h2><div>{site.services.filter(Boolean).map((service,i)=><article key={i}><b>✳</b><h3>{service}</h3><p>Thoughtful solutions, shaped around what matters to you.</p></article>)}</div></section>
